@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from './CartContext';
 import { useAuth } from './AuthContext';
 
@@ -19,7 +19,7 @@ const NAV_LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [currentDept, setCurrentDept] = useState('');
   const { cartCount, cartTotal, wishlistCount, setIsConsultationModalOpen } = useCart();
   const { user, isAdmin, logout, openLogin } = useAuth();
   const [profileDropdown, setProfileDropdown] = useState(false);
@@ -71,7 +71,11 @@ export default function Header() {
   useEffect(() => {
     setMobileMenuOpen(false);
     setIsVisible(true);
-  }, [pathname, searchParams]);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setCurrentDept(params.get('dept') || '');
+    }
+  }, [pathname]);
 
   // Live search debounce
   useEffect(() => {
@@ -106,7 +110,6 @@ export default function Header() {
     router.push(query ? `/?search=${encodeURIComponent(query)}` : '/');
   };
 
-  const currentDept = searchParams.get('dept') || '';
   const isActive = (href) =>
     pathname === href || (href.includes('dept=') && currentDept === href.split('dept=')[1]);
 
