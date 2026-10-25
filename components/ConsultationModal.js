@@ -14,15 +14,22 @@ export default function ConsultationModal() {
       kanchipuram: true,
       banarasi: false,
       gadwal: false,
-      muhurtham: true,
+      pochampally: false,
+      groom: false,
     },
   });
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isConsultationModalOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name || !formData.phone) {
+      showToast('Please enter your name and WhatsApp phone number.');
+      return;
+    }
+    setSubmitting(true);
     try {
       const selectedWeaves = Object.keys(formData.weaves).filter((k) => formData.weaves[k]);
       await fetch('/api/appointments', {
@@ -31,13 +38,13 @@ export default function ConsultationModal() {
         body: JSON.stringify({
           customerName: formData.name,
           customerPhone: formData.phone,
-          date: formData.date,
+          date: formData.date || new Date().toISOString().split('T')[0],
           slot: formData.slot,
           weaves: selectedWeaves,
         }),
       });
       setIsSuccess(true);
-      showToast('Video Shopping appointment request confirmed!');
+      showToast('Video Shopping appointment confirmed! Our stylist will message you shortly.');
       setTimeout(() => {
         setIsSuccess(false);
         setIsConsultationModalOpen(false);
@@ -50,188 +57,168 @@ export default function ConsultationModal() {
             kanchipuram: true,
             banarasi: false,
             gadwal: false,
-            muhurtham: true,
+            pochampally: false,
+            groom: false,
           },
         });
-      }, 3500);
+      }, 4000);
     } catch (err) {
-      showToast('Could not schedule session. Please try again.');
+      showToast('Could not schedule appointment. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-surface-container-lowest text-on-surface rounded-2xl max-w-lg w-full p-space-lg shadow-2xl relative flex flex-col gap-space-md border border-secondary-fixed/30 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary text-[24px]">
-              videocam
-            </span>
-            <h3 className="font-headline-sm text-headline-sm text-primary">
-              Schedule Bridal Video Shopping
-            </h3>
-          </div>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative border border-[#DFC587]/60 animate-in fade-in zoom-in-95 duration-200">
+        {/* Header Ribbon */}
+        <div className="bg-gradient-to-r from-[#7A1426] to-[#520B16] text-white p-6 relative">
           <button
             onClick={() => setIsConsultationModalOpen(false)}
-            className="w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant cursor-pointer transition-colors"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/20 text-gold text-[10px] font-bold uppercase tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-gold animate-ping"></span>
+            <span>HD Live Video Drape</span>
+          </div>
+
+          <h2 className="font-heading text-2xl font-bold">
+            Schedule Video Shopping Session
+          </h2>
+          <p className="text-xs text-white/80 mt-1 font-light leading-relaxed">
+            Experience our Gudur &amp; Palakurthy showrooms from anywhere. A master stylist will drape sarees, show daylight pallu sheen, and answer questions.
+          </p>
         </div>
 
-        <p className="font-body-sm text-body-sm text-on-surface-variant">
-          Connect with our master saree stylists from Hyderabad. We will showcase your selected colors, borders, and pallu drapings in real-time over WhatsApp / Zoom HD video.
-        </p>
-
-        {isSuccess ? (
-          <div className="p-4 bg-tertiary-container text-on-tertiary rounded-xl text-body-sm font-body-sm text-center flex flex-col items-center gap-2">
-            <span className="material-symbols-outlined text-secondary-fixed text-[36px]">
-              verified
-            </span>
-            <p className="font-title-md text-title-md font-bold">
-              Auspicious greeting, {formData.name || 'Valued Bride'}!
-            </p>
-            <p>
-              Your session request has been received. Our chief stylist will message your WhatsApp at <strong>{formData.phone}</strong> with the private HD joining link within 30 minutes.
-            </p>
-          </div>
-        ) : (
-          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-            <div>
-              <label className="block font-label-sm text-label-sm text-on-surface font-semibold mb-1">
-                Your Full Name
-              </label>
-              <input
-                className="w-full px-3 py-2 bg-surface-container-low rounded-lg text-body-sm font-body-sm focus:outline-none focus:bg-surface-container border border-surface-dim/40"
-                placeholder="e.g. Sravanthi Reddy"
-                required
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+        {/* Modal Body */}
+        <div className="p-6 md:p-8 space-y-5">
+          {isSuccess ? (
+            <div className="py-8 text-center space-y-3">
+              <span className="material-symbols-outlined text-emerald-600 text-[56px]">
+                verified
+              </span>
+              <h3 className="font-heading text-2xl font-bold text-charcoal">
+                Auspicious Greetings, {formData.name}!
+              </h3>
+              <p className="text-xs text-[#555] max-w-sm mx-auto leading-relaxed">
+                Your private video consultation has been reserved for <strong>{formData.slot}</strong>. Master stylist Sri Ramalingam will send your private joining link to <strong>{formData.phone}</strong> via WhatsApp.
+              </p>
             </div>
-
-            <div>
-              <label className="block font-label-sm text-label-sm text-on-surface font-semibold mb-1">
-                WhatsApp Mobile Number
-              </label>
-              <input
-                className="w-full px-3 py-2 bg-surface-container-low rounded-lg text-body-sm font-body-sm focus:outline-none focus:bg-surface-container border border-surface-dim/40"
-                placeholder="+91 / +1 (Country Code) Mobile"
-                required
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block font-label-sm text-label-sm text-on-surface font-semibold mb-1">
-                  Preferred Date
+                <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-1.5">
+                  Your Full Name *
                 </label>
                 <input
-                  className="w-full px-3 py-2 bg-surface-container-low rounded-lg text-body-sm font-body-sm focus:outline-none focus:bg-surface-container border border-surface-dim/40"
+                  type="text"
                   required
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Sravanthi Reddy"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block font-label-sm text-label-sm text-on-surface font-semibold mb-1">
-                  Time Slot (IST)
+                <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-1.5">
+                  WhatsApp Number (With Country Code) *
                 </label>
-                <select
-                  className="w-full px-3 py-2 bg-surface-container-low rounded-lg text-body-sm font-body-sm focus:outline-none focus:bg-surface-container border border-surface-dim/40"
-                  value={formData.slot}
-                  onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+91 98491 23456 / +1 408 555 0192"
+                  className="input-field"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-1.5">
+                    Preferred Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-1.5">
+                    Time Slot
+                  </label>
+                  <select
+                    value={formData.slot}
+                    onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
+                    className="input-field bg-white"
+                  >
+                    <option>11:00 AM - 12:00 PM (Morning)</option>
+                    <option>02:00 PM - 03:00 PM (Afternoon)</option>
+                    <option>04:00 PM - 05:00 PM (Evening)</option>
+                    <option>07:00 PM - 08:00 PM (US Friendly)</option>
+                    <option>09:00 PM - 10:00 PM (US Friendly)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-2">
+                  Select Weaves of Interest
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  {[
+                    { key: 'kanchipuram', label: 'Kanchipuram Silk' },
+                    { key: 'banarasi', label: 'Banarasi Brocade' },
+                    { key: 'gadwal', label: 'Gadwal Handloom' },
+                    { key: 'pochampally', label: 'Pochampally Ikat' },
+                    { key: 'groom', label: 'Groom Panche/Dhoti' },
+                  ].map((weave) => (
+                    <label
+                      key={weave.key}
+                      className={`flex items-center gap-2 p-2 rounded-xl border cursor-pointer transition-all ${
+                        formData.weaves[weave.key]
+                          ? 'bg-[#FAF3EA] border-[#C5A04B] text-charcoal font-semibold'
+                          : 'bg-[#FAF7F2] border-[#EAE5DC] text-[#666]'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.weaves[weave.key]}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            weaves: { ...formData.weaves, [weave.key]: e.target.checked },
+                          })
+                        }
+                        className="accent-[#7A1426] w-3.5 h-3.5"
+                      />
+                      <span className="truncate">{weave.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-secondary w-full py-3.5 text-xs uppercase tracking-widest font-bold shadow-lg flex items-center justify-center gap-2"
                 >
-                  <option>11:00 AM - 12:00 PM</option>
-                  <option>02:00 PM - 03:00 PM</option>
-                  <option>04:00 PM - 05:00 PM</option>
-                  <option>07:00 PM - 08:00 PM (US Friendly)</option>
-                </select>
+                  <span className="material-symbols-outlined text-[18px]">videocam</span>
+                  <span>{submitting ? 'Confirming Slot...' : 'Confirm Video Consultation'}</span>
+                </button>
               </div>
-            </div>
-
-            <div>
-              <label className="block font-label-sm text-label-sm text-on-surface font-semibold mb-1">
-                Weave Interest
-              </label>
-              <div className="flex flex-wrap gap-2 text-label-sm font-label-sm">
-                <label className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1.5 rounded cursor-pointer">
-                  <input
-                    checked={formData.weaves.kanchipuram}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        weaves: { ...formData.weaves, kanchipuram: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                    type="checkbox"
-                  />
-                  <span>Kanchipuram</span>
-                </label>
-
-                <label className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1.5 rounded cursor-pointer">
-                  <input
-                    checked={formData.weaves.banarasi}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        weaves: { ...formData.weaves, banarasi: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                    type="checkbox"
-                  />
-                  <span>Banarasi</span>
-                </label>
-
-                <label className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1.5 rounded cursor-pointer">
-                  <input
-                    checked={formData.weaves.gadwal}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        weaves: { ...formData.weaves, gadwal: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                    type="checkbox"
-                  />
-                  <span>Gadwal</span>
-                </label>
-
-                <label className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1.5 rounded cursor-pointer">
-                  <input
-                    checked={formData.weaves.muhurtham}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        weaves: { ...formData.weaves, muhurtham: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                    type="checkbox"
-                  />
-                  <span>Muhurtham Red</span>
-                </label>
-              </div>
-            </div>
-
-            <button
-              className="w-full mt-2 py-3 rounded-lg bg-primary-container text-on-primary font-title-md text-title-md font-semibold hover:bg-surface-tint shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              type="submit"
-            >
-              <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-              <span>Confirm Video Shopping Session</span>
-            </button>
-          </form>
-        )}
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

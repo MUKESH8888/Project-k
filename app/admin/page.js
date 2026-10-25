@@ -124,9 +124,9 @@ export default function AdminDashboardPage() {
     if (!newProductData.title || !newProductData.price) return;
     try {
       const defaultImages = {
-        women: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
-        men: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80',
-        kids: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&w=800&q=80',
+        women: '/images/products/kanchipuram-pattu.jpg',
+        men: '/images/products/banarasi-pattu.jpg',
+        kids: '/images/products/gadwal-pattu.jpg',
       };
       const res = await fetch('/api/products', {
         method: 'POST',
@@ -161,6 +161,26 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Delete product via DELETE /api/products/[id]
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to remove this handloom product from the active catalog?')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        showToast('Product removed from catalog');
+        setProducts((prev) => prev.filter((p) => p.id !== productId && p.sku !== productId));
+      } else {
+        showToast('Failed to remove product');
+      }
+    } catch (err) {
+      showToast('Error removing product');
+    }
+  };
+
   // If not admin, show gate
   if (!isAdmin) {
     return (
@@ -182,18 +202,32 @@ export default function AdminDashboardPage() {
             You must be logged in as an authorized store administrator to access the Kalyanam Shopping Mall enterprise operations dashboard.
           </p>
 
-          <div className="flex flex-col gap-2 w-full pt-2">
+          <div className="flex flex-col gap-2.5 w-full pt-2">
+            <button
+              onClick={async () => {
+                try {
+                  await login('admin@kalyanammall.com', 'admin123');
+                  showToast('Admin authorized. Welcome, Sri Ramalingam!');
+                } catch (err) {
+                  showToast('Authentication error');
+                }
+              }}
+              className="btn-secondary w-full py-3 text-xs uppercase tracking-wider font-bold shadow-md cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">key</span>
+              <span>1-Click Enter as Admin (Demo)</span>
+            </button>
+
             <Link
               href="/admin/login"
-              className="w-full py-3 rounded-lg bg-primary text-on-primary font-semibold text-center hover:bg-primary-container transition-colors shadow-md"
+              className="btn-outline w-full py-2.5 text-xs uppercase tracking-wider font-bold text-center"
             >
-              Sign In to Admin Portal
+              Sign In with Custom Credentials
             </Link>
-
 
             <Link
               href="/"
-              className="w-full py-2 text-label-sm text-on-surface-variant hover:underline text-center"
+              className="w-full py-2 text-xs text-charcoal/70 hover:underline text-center"
             >
               Return to Storefront
             </Link>
@@ -857,6 +891,7 @@ export default function AdminDashboardPage() {
                     <th className="py-3">Category</th>
                     <th className="py-3">Price</th>
                     <th className="py-3">In Stock</th>
+                    <th className="py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-container">
@@ -896,6 +931,17 @@ export default function AdminDashboardPage() {
                         >
                           {prod.stock} Available
                         </span>
+                      </td>
+                      <td className="py-3">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(prod.id || prod.sku)}
+                          className="px-2.5 py-1 text-xs rounded bg-red-50 text-red-700 hover:bg-red-100 font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Remove from catalog"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          <span>Delete</span>
+                        </button>
                       </td>
                     </tr>
                   ))}

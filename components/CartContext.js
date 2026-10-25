@@ -12,7 +12,7 @@ const initialCartItems = [
     price: 42500,
     originalPrice: 50000,
     shade: 'Sindhoori Vermilion Red',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHkT12UTrTxeV74z_cSXLY0-fFKXzu2zmXeu4dtKXKjWDwRTcYwVmSMBd6Q218o6a5xS4y9BR6-KZKbuD_-FoP69rev0kcmxQyJGeeKJuQCoZA2o6VJpFl_jheXqSyZazbKQdDt9bz5vbvtC7x8Eciwv4Ko43uFUPBsLKzzugqnshfEQbVkT7icv8PLFpIfwGXhb3EwofHAHoaIQZmL7U4dPCjfv81HKODfHgQC9s-J6AEM_SmrMOR',
+    image: '/images/products/kanchipuram-pattu.jpg',
     badge: 'SILK MARK',
     quantity: 1,
     customizations: ['Fall & Pico Included', 'Silk Kuchu Done'],
@@ -24,7 +24,7 @@ const initialCartItems = [
     price: 24900,
     originalPrice: 28000,
     shade: 'Peacock Emerald & Mustard',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCy0UOy__LQQHUHbfipT7aAQnxx0g8fvUMG4rKn4OS4EPMCgj2sHrLDyk0AouGi5rUfIYn_-piMH7x651LYfbD7mOQpAsqa71NKixgdMdQl5i2tg864l_uDnjBYiKZxgoHOJX9_iw7LyYP_vr0AYVkytM3GsexirfEI4e9KirlJticpCaJo2Oh3QLuf7TuU3fo_aJVtMWcYOG4CLUMv3ey5L6gj_q-fUyGzssTCgzLSSOc8Gnvkxi_c',
+    image: '/images/products/gadwal-pattu.jpg',
     badge: 'HANDLOOM',
     quantity: 1,
     customizations: ['Silk Kuchu Done'],
@@ -89,6 +89,10 @@ export function CartProvider({ children }) {
     });
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -102,6 +106,7 @@ export function CartProvider({ children }) {
         wishlistCount: wishlist.length,
         addToCart,
         removeFromCart,
+        clearCart,
         toggleWishlist,
         toastMessage,
         showToast,

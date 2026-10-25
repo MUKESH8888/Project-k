@@ -32,7 +32,7 @@ export async function POST(request) {
       );
     }
 
-    const newProduct = Db.createProduct(body);
+    const newProduct = await Db.createProduct(body);
     return NextResponse.json(
       {
         success: true,

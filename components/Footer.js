@@ -13,127 +13,153 @@ export default function Footer() {
     e.preventDefault();
     if (!email) return;
     setSubscribed(true);
-    showToast('Subscribed to Kalyanam Bridal Drops privilege invitations!');
+    showToast('Auspicious welcome! You are subscribed to Kalyanam Bridal Drops.');
     setTimeout(() => {
       setEmail('');
       setSubscribed(false);
     }, 4000);
   };
 
-  const logoUrl = '/images/logo.png';
-
   return (
-    <footer className="w-full bg-[#1a1b18] text-white pt-12 pb-8 border-t border-[#2d2e2b] font-sans">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-          {/* Column 1: Brand & Heritage Identity */}
-          <div className="flex flex-col gap-3">
-            <Link href="/" className="flex items-center gap-2">
+    <footer className="w-full bg-[#141210] text-[#EDE8E0] pt-16 pb-10 border-t border-[#2D2A26] font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-14">
+          {/* Column 1: Brand & Heritage (4 Cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-4">
+            <Link href="/" className="flex items-center gap-3 group">
               <img
                 alt="Kalyanam Shopping Mall"
-                className="h-10 w-auto object-contain"
-                src={logoUrl}
+                className="h-11 w-auto object-contain"
+                src="/images/logo.png"
               />
-            </Link>
-            <p className="text-xs text-[#c5a04b] italic font-medium">
-              కళ్యాణం - తరతరాల తెలుగు సాంప్రదాయ వైభవం
-            </p>
-            <p className="text-xs text-gray-300 leading-relaxed">
-              Serving the communities of Gudur and Palakurthy, Telangana with authentic silk sarees, handloom wedding wear, and festive fashion for the entire family.
-            </p>
-            <div className="flex flex-col gap-1.5 mt-2 text-xs text-gray-300">
-              <div className="flex items-start gap-2">
-                <span className="material-symbols-outlined text-[16px] text-[#c5a04b] shrink-0 mt-0.5">
-                  location_on
+              <div className="flex flex-col border-l border-gold/40 pl-3">
+                <span className="font-heading text-xl font-bold text-white tracking-tight">
+                  కళ్యాణం
                 </span>
-                <span>
-                  Gudur &amp; Palakurthy, Telangana
+                <span className="text-[9px] uppercase tracking-[0.25em] text-gold font-semibold">
+                  Shopping Mall
                 </span>
               </div>
+            </Link>
+
+            <p className="text-xs text-gold italic font-medium">
+              కళ్యాణం — తరతరాల తెలుగు సాంప్రదాయ వైభవం
+            </p>
+
+            <p className="text-xs text-[#B8B2A7] leading-relaxed font-light">
+              Adorning over 100,000 sacred matrimonies across three generations. Twin multi-floor flagship shopping destinations in Gudur and Palakurthy, Telangana with direct-weaver authentic handloom pure silk.
+            </p>
+
+            <div className="space-y-2 text-xs text-[#C8C2B7] pt-2">
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-[16px] text-gold shrink-0 mt-0.5">
+                  location_on
+                </span>
+                <span>Gudur &amp; Palakurthy Flagship Showrooms, Telangana</span>
+              </div>
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px] text-[#c5a04b] shrink-0">
+                <span className="material-symbols-outlined text-[16px] text-gold shrink-0">
                   call
                 </span>
                 <span>+91 98490 12345 / +91 98490 54321</span>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-gold shrink-0">
+                  mail
+                </span>
+                <span>concierge@kalyanammall.com</span>
+              </div>
             </div>
           </div>
 
-          {/* Column 2: Departments & Collections */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Collections
+          {/* Column 2: Sacred Collections (2.5 Cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-3">
+            <h3 className="font-heading text-sm font-bold text-white uppercase tracking-wider mb-1">
+              Handloom Weaves
             </h3>
-            <ul className="flex flex-col gap-2 text-xs text-gray-300">
-              <li className="hover:text-white transition-colors">
-                <Link href="/?dept=women">Women&apos;s Wear (మహిళలు)</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/?dept=men">Men&apos;s Ethnic (పురుషులు)</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/?dept=kids">Kids Collection (పిల్లలు)</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/sarees">Pattu Silk Sarees</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/sarees?category=bridal">Bridal &amp; Muhurtham</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/stores">Flagship Showrooms</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/about">About Kalyanam</Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: Customer Concierge */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Customer Concierge
-            </h3>
-            <ul className="flex flex-col gap-2 text-xs text-gray-300">
-              <li className="hover:text-white transition-colors">
-                <button
-                  onClick={() => setIsConsultationModalOpen(true)}
-                  className="text-left hover:text-[#c5a04b] transition-colors cursor-pointer"
-                >
-                  Book Virtual Video Consultation
-                </button>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/about">Silk Mark Verification Guide</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/checkout">Track Your Matrimonial Order</Link>
-              </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/product/swarna-kanchi-pure-silk-saree">
-                  Custom Blouse Stitching &amp; Kuchu
+            <ul className="space-y-2 text-xs text-[#B8B2A7]">
+              <li>
+                <Link href="/sarees" className="hover:text-gold transition-colors">
+                  Pure Kanchipuram Pattu (కాంచీపురం)
                 </Link>
               </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/about">Worldwide Insured Shipping Policy</Link>
+              <li>
+                <Link href="/sarees" className="hover:text-gold transition-colors">
+                  Banarasi Katan Silk Brocades (బనారసి)
+                </Link>
               </li>
-              <li className="hover:text-white transition-colors">
-                <Link href="/stores">Auspicious Muhurtham Calendar</Link>
+              <li>
+                <Link href="/sarees" className="hover:text-gold transition-colors">
+                  Gadwal Handloom Silk &amp; Cotton (గద్వాల)
+                </Link>
+              </li>
+              <li>
+                <Link href="/sarees" className="hover:text-gold transition-colors">
+                  Pochampally Double Ikat (పోచంపల్లి)
+                </Link>
+              </li>
+              <li>
+                <Link href="/?dept=men" className="hover:text-gold transition-colors">
+                  Groom Pattu Panche &amp; Kanduva (పురుషులు)
+                </Link>
+              </li>
+              <li>
+                <Link href="/?dept=kids" className="hover:text-gold transition-colors">
+                  Girls Pattu Pavada &amp; Dhoti Sets (పిల్లలు)
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Bridal Drops & Newsletter */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Privilege Newsletter
+          {/* Column 3: White-Glove Concierge (2.5 Cols) */}
+          <div className="lg:col-span-2 flex flex-col gap-3">
+            <h3 className="font-heading text-sm font-bold text-white uppercase tracking-wider mb-1">
+              Bridal Services
             </h3>
-            <p className="text-xs text-gray-300 leading-relaxed">
-              Receive privileged preview invitations for limited master-weaver muhurtham weaves.
+            <ul className="space-y-2 text-xs text-[#B8B2A7]">
+              <li>
+                <button
+                  onClick={() => setIsConsultationModalOpen(true)}
+                  className="text-left hover:text-gold transition-colors text-xs text-[#B8B2A7]"
+                >
+                  Book HD Video Shopping
+                </button>
+              </li>
+              <li>
+                <Link href="/stores" className="hover:text-gold transition-colors">
+                  Gudur &amp; Palakurthy Stores
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-gold transition-colors">
+                  75+ Yrs Weaving Heritage
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-gold transition-colors">
+                  Contact Master Stylists
+                </Link>
+              </li>
+              <li>
+                <Link href="/checkout" className="hover:text-gold transition-colors">
+                  Track Auspicious Order
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Privilege Newsletter & Purity Trust (3 Cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-3">
+            <h3 className="font-heading text-sm font-bold text-white uppercase tracking-wider mb-1">
+              Privilege Circle
+            </h3>
+            <p className="text-xs text-[#B8B2A7] leading-relaxed font-light">
+              Receive private invitations for limited master-weaver drop previews and Telugu wedding muhurtham dates.
             </p>
-            <form onSubmit={handleSubscribe} className="flex items-center mt-1">
+
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-stretch gap-2 mt-1">
               <input
-                className="w-full bg-white/10 text-white placeholder:text-gray-400 px-3 py-2 text-xs rounded-none border border-white/20 focus:outline-none focus:border-[#c5a04b]"
+                className="w-full bg-[#201D1A] text-white placeholder:text-[#777] px-4 py-2.5 text-xs rounded-full border border-[#3E3830] focus:outline-none focus:border-gold"
                 placeholder="Enter your email address"
                 type="email"
                 value={email}
@@ -142,54 +168,54 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                className="bg-[#c5a04b] text-[#1a1b18] text-xs px-4 py-2 rounded-none font-bold hover:bg-[#d8b564] transition-colors shrink-0 cursor-pointer uppercase tracking-wider"
+                className="btn-secondary px-5 py-2.5 text-xs font-bold uppercase tracking-wider shrink-0"
               >
                 {subscribed ? 'Joined!' : 'Join'}
               </button>
             </form>
-            <div className="pt-2">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
-                Artisanal Trust Assurances
+
+            {/* Purity Guarantee Badges */}
+            <div className="pt-3 border-t border-[#2D2A26] mt-2">
+              <span className="text-[10px] font-bold text-gold uppercase tracking-widest block mb-2">
+                Certified Purity Standards
               </span>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-300">
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-[#EDE8E0]">
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-[#c5a04b]">
+                  <span className="material-symbols-outlined text-[15px] text-gold">
                     verified
                   </span>
-                  <span>Silk Mark Certified</span>
+                  <span>100% Silk Mark</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-[#c5a04b]">
-                    workspace_premium
+                  <span className="material-symbols-outlined text-[15px] text-gold">
+                    flare
                   </span>
-                  <span>Handloom Mark India</span>
+                  <span>Tested Real Zari</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-[#c5a04b]">
-                    star
+                  <span className="material-symbols-outlined text-[15px] text-gold">
+                    content_cut
                   </span>
-                  <span>100% Pure Zari</span>
+                  <span>Fall &amp; Pico Free</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-[#c5a04b]">
-                    lock
+                  <span className="material-symbols-outlined text-[15px] text-gold">
+                    flight_takeoff
                   </span>
-                  <span>256-Bit Encrypted</span>
+                  <span>Global Air Transit</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Rights & Payment Icons */}
-        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400 border-t border-white/10">
+        {/* Footer Bottom Rights Bar */}
+        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8E877D] border-t border-[#2D2A26]">
           <p>
-            © 2025 Kalyanam Shopping Mall Private Limited. Crafted with reverence for Telugu bridal heritage.
+            © 2026 Kalyanam Shopping Mall Private Limited. Woven with reverence for Telugu matrimony traditions.
           </p>
-          <div className="flex items-center gap-3">
-            <span>
-              Secured Payments: UPI • RuPay • Visa • Mastercard • NetBanking
-            </span>
+          <div className="flex items-center gap-4 text-[11px]">
+            <span>100% Secure Checkout: UPI • RuPay • Visa • Mastercard • Net Banking</span>
           </div>
         </div>
       </div>

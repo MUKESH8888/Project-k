@@ -11,7 +11,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Status is required' }, { status: 400 });
     }
 
-    const updated = Db.updateAppointmentStatus(id, status);
+    const updated = await Db.updateAppointmentStatus(id, status);
     if (!updated) {
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 });
     }

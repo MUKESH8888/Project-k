@@ -13,9 +13,9 @@ export default function SareesPage() {
   const [sortBy, setSortBy] = useState('featured');
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
-  // Filter States
-  const [selectedCategories, setSelectedCategories] = useState(['Kanchipuram Pattu']);
-  const [selectedZaris, setSelectedZaris] = useState(['Tested Pure Gold Zari']);
+  // Filter States - Default to all sarees
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedZaris, setSelectedZaris] = useState([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [selectedColor, setSelectedColor] = useState(null);
 
@@ -27,8 +27,7 @@ export default function SareesPage() {
       title: 'Swarna Kanchi Pure Silk Saree - Sindhoori Vermilion Red with Korvai Gold Border',
       telugu: 'సిందూర ఎరుపు కంచి పట్టు చీర',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC1emaGVTIB7QiE5dusOWDoxX2Kwh8lqssDlBdioL3Z68INfyngpdE-Kuj9W6mTp26imZYQznadJt1bndiTRpaTLZT3mVj-dKj1AOQXQUqXoh8DsAWzPZjXijVQ5DOPyj63W6I6ON2ieyT0jYWTLRERd-X0EyCWfW8CL7iTepLzwcHnUMeXbnFUkhfXJbE-KHD0N_npQfDAy_PdS14HCD9TSkn4N502O_pCbjTaWKczL1NOVqtqjY-6',
+      image: '/images/products/kanchipuram-pattu.jpg',
       price: 42500,
       originalPrice: 50000,
       discount: '15% OFF',
@@ -46,8 +45,7 @@ export default function SareesPage() {
       title: 'Rani Pink Royal Bridal Brocade Kanchipuram Pattu with Peacocks & Floral Zari',
       telugu: 'రాణీ గులాబీ రాయల్ పెళ్లి పట్టు',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDZintyKDl-VguA5qsKX48HCNP7e_MPxmR00twJfbbR6Lg1nnDtjdr4DKdJTKYI41VvZGwfll2SoevaijVedY4ZdvXGZ45j2Oilmi_NFJ49c-dy7_bRgd0iCKfP8M6zxDqKU1TVK4eOVvk0eMx0WWhfrt5eqWC6TDi66Irwn9ILkkUvWeMdY4KkNelnxVR6hqt5Is52aI669PQ2Ml7yiNd18AdTJdlhUtL4kbLYG3DpmQIJP-w6Hf-z',
+      image: '/images/products/designer-saree.jpg',
       price: 58000,
       originalPrice: 62000,
       discount: null,
@@ -65,8 +63,7 @@ export default function SareesPage() {
       title: 'Mayilkan Green & Mustard Yellow Dual Tone Handloom Gadwal Saree',
       telugu: 'మయిల్ కణ్ ఆకుపచ్చ గద్వాల పట్టు',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDN0r9MehqHsFPY4bZzYLYKfGU_stMf_JCllxQnbDiuxDplIHlrvZvnVi9Mo6tR4D9X700MCt2g1kP2jThEvN4dXWyFmypzBFOUw1tBslJFGXBxPBPN5tw_lrfXNKs9yLY2J1U-Ko2u1JIs2v1fVCymmRgwgc_JWCD8hyix-ImoitncJ_kTdSGE_-Pla6QHXav_-TyzDVrl5kEhJJOjuGFran3wN5sOLhq84FTMH3SD2G-zy7VU3Vwx',
+      image: '/images/products/gadwal-pattu.jpg',
       price: 24900,
       originalPrice: 28000,
       discount: '11% OFF',
@@ -83,8 +80,7 @@ export default function SareesPage() {
       title: 'Padma Banarasi Katan Silk Saree in Midnight Royal Blue & Pure Gold Jaal',
       telugu: 'రాయల్ బ్లూ బనారసి కతాన్ పట్టు',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuACfyIdaUK4TQNg52-1_Tk9jay-zIYLzL11hkBIWa6VNHRV-3MxA9uu9abIxacf5Vsqh6Sn6J0JOOKPrBpcJgFTqxUGUA7KEwbkmQWbis2vfihdP9IEVJhr_rKvDZFfX6klncVvVMI81dXbn55nJoh6-TkUiHIvJnby7RRli55x99YC5fCgB0yc70pMdavOa8E_Qsn_pC6SMuljtKVKhyqdjfjN9GaxNwKDeeFLGzsl74UvUdBgYQFU',
+      image: '/images/products/banarasi-pattu.jpg',
       price: 36500,
       originalPrice: 40000,
       discount: null,
@@ -102,8 +98,7 @@ export default function SareesPage() {
       title: 'Kalyanam Royal Korvai Saree - Turmeric Mustard & Magenta Contrast Border',
       telugu: 'పసుపు పచ్చ కాంచీపురం పట్టు చీర',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC4D_kKb1RQDVeLQ-8Sfw2e5pkoPacsUQl8q1CUCarJ3ODFj002Dv0thz-P02GLqW-LNEV3sXWDq99E_gC832Eek0IKjf5yzjvvwVN8xbC_ydZDqD9HcuqKd5Dd5XxiEG13CKJUI0Ydnq97p7w0-_svsPCDF1AOeTFcLh7Dj52y5ujGPW6CTx1qBEpZGk3yL5xf5lvB2TVidN09WfHCcPp68yl69BUWOdgyaBZqOqTTEdOhJ6X_-BN-',
+      image: '/images/products/kanchipuram-pattu.jpg',
       price: 46000,
       originalPrice: 52000,
       discount: '12% OFF',
@@ -121,8 +116,7 @@ export default function SareesPage() {
       title: 'Uppada Jamdani Fine Handloom Silk Saree - Temple Ivory with Ganga Jamuna Zari',
       telugu: 'ఉప్పాడ జామ్‌దానీ పట్టు చీర',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDQJE_obURIAOjvPU02l3Cs_zbiGKBzqC5kheF9nFLS7wtnswCk1CAaI41byzWszGzEaYrKbITJ5LuCK_2gJDFoXWnz-i83KulPBbw7aBxj3311kK8_a9RzqRJtrFtN1VKykwnICKOsfWlhnqXgWQ3xmBfWdQFnByOAPu3lFUK8-d79ICvqx8xk9HvfUFu-L4j6VrXilMqoQje8KxDSyPZyoynL3N8G4bEZ2ZsHqwSH76eAI79E9Blg',
+      image: '/images/products/designer-saree.jpg',
       price: 29500,
       originalPrice: 34000,
       discount: null,
@@ -139,8 +133,7 @@ export default function SareesPage() {
       title: 'Dharmavaram Heavy Bridal Pattu - Crimson Body with Grand Twin Peacock Pallu',
       telugu: 'ధర్మవరం రాయల్ పెళ్లి పట్టు',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuD1us0VeC6zKYfvsAQbFe6Qb5MBeM9RvG1c3leQKrY3b0lO2DcKvQlaPBQu01vPSzXEpWBKU3Qs18qk7qYbNoSJWzqKuMES0hIslxytSRyrMaIgZ8Rck2jYkyXpLu3W8tInhJdKdMNiCauInWYH5pGCKfdll-_wmQQNghQx-ovJCOxcG9-pInsV1vhiqyEy7FKJ9kdArb9hoUVqtktl9Jb_oaAuqmVrJhoe8mIADr9agfNMl-noj6by',
+      image: '/images/products/banarasi-pattu.jpg',
       price: 52000,
       originalPrice: 58000,
       discount: '10% OFF',
@@ -158,8 +151,7 @@ export default function SareesPage() {
       title: 'Pochampally Double Ikat Silk Saree - Geometric Chevron Heritage Diamonds',
       telugu: 'పోచంపల్లి ఇక్కత్ పట్టు చీర',
       href: '/product/swarna-kanchi-pure-silk-saree',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuATTe6A-9Knp98SsDGSAFhFEZcQUGHR2raWqjxGlom9xJxT8uN_CBGIg9OwLkbuRNZAQzwp9VhGndsN_FOE-b-WUEVnt7L_kMOfkAzIHVd3M6kUXJEVB-3XxMicQ1XYy9BbZ9w0VGKT4MszGTR_tDu0xGeuZ7fc7DWBbB9mouJyJ1dXZ50v_49cCoje7OHXbMSC97IVOPiITkyMy21_LNnob6kWj4l2YIN77nKeJbUtD8DA3TjPiTjZ',
+      image: '/images/products/pochampally-ikat.jpg',
       price: 19800,
       originalPrice: 22500,
       discount: null,
@@ -209,7 +201,7 @@ export default function SareesPage() {
     <>
       <Header />
 
-      <main className="w-full pt-[116px] bg-background min-h-screen">
+      <main className="w-full pt-[115px] md:pt-[135px] bg-background min-h-screen">
         <div className="flex flex-col w-full">
           {/* ============================================================
               TOP EDITORIAL HEADER & BREADCRUMB RIBBON

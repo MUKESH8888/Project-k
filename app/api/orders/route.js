@@ -3,7 +3,7 @@ import { Db } from '../../../lib/db';
 
 export async function GET() {
   try {
-    const orders = Db.getOrders();
+    const orders = await Db.getOrders();
     return NextResponse.json({
       success: true,
       count: orders.length,
@@ -28,7 +28,7 @@ export async function POST(request) {
       );
     }
 
-    const newOrder = Db.createOrder(body);
+    const newOrder = await Db.createOrder(body);
 
     return NextResponse.json(
       {

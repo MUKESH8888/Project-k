@@ -3,7 +3,7 @@ import { Db } from '../../../lib/db';
 
 export async function GET() {
   try {
-    const appointments = Db.getAppointments();
+    const appointments = await Db.getAppointments();
     return NextResponse.json({
       success: true,
       count: appointments.length,
@@ -28,7 +28,7 @@ export async function POST(request) {
       );
     }
 
-    const appt = Db.createAppointment(body);
+    const appt = await Db.createAppointment(body);
     return NextResponse.json(
       {
         success: true,

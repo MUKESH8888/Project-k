@@ -1,40 +1,53 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useCart } from '../../components/CartContext';
 
-const stores = [
+const STORES = [
   {
+    id: 'gudur',
     name: 'Kalyanam Shopping Mall — Gudur Store',
-    telugu: 'కళ్యాణం షాపింగ్ మాల్ — గూడూరు',
-    address: 'Palakurthy Rd, Gudur, Telangana 506252',
+    telugu: 'కళ్యాణం షాపింగ్ మాల్ — గూడూరు (ఫ్లాగ్‌షిప్)',
+    tag: 'GRAND FLAGSHIP SHOWROOM',
+    image: '/images/banners/hero-collection.jpg',
+    address: 'Palakurthy Road, Gudur, Telangana 506252',
+    landmark: 'Near Main Cross Roads, Palakurthy Road Junction',
     phone: '+91 98490 12345',
     timings: 'Mon - Sat: 9:00 AM - 8:00 PM | Sun: 10:00 AM - 6:00 PM',
     mapUrl: 'https://maps.app.goo.gl/tn1VL1L4jCtobqdT7?g_st=iw',
     code: 'PCF6+8GQ',
-    features: [
-      'Complete Family Collection (Women, Men, Kids)',
-      'Wedding & Bridal Saree Lounge',
-      'Traditional Pattu Panche & Dhotis',
-      'Direct Weaver Sourced Weaves',
+    amenities: [
+      'Multi-Floor Family Collection (Women, Men, Kids)',
+      'VIP Bridal Muhurtham Saree Lounge with Personal Stylists',
+      'Exclusive Traditional Pattu Panche & Dhoti Studio for Grooms',
+      'Children Festive Pattu Pavada & Ethnic Pavilion',
+      'Silk Mark Testing & Guarantee Counter',
+      'Dedicated Customer Car Parking Available',
     ],
     isFlagship: true,
   },
   {
+    id: 'palakurthy',
     name: 'Kalyanam Shopping Mall — Palakurthy Store',
     telugu: 'కళ్యాణం షాపింగ్ మాల్ — పాలకుర్తి',
+    tag: 'HERITAGE WEAVING DESTINATION',
+    image: '/images/banners/hero-bridal.jpg',
     address: 'Palakurthy Main Road, Palakurthy, Telangana 506146',
+    landmark: 'Opposite State Bank, Palakurthy Main Road',
     phone: '+91 98490 54321',
     timings: 'Mon - Sat: 9:00 AM - 8:00 PM | Sun: 10:00 AM - 6:00 PM',
     mapUrl: 'https://maps.app.goo.gl/iFrxPDS4CcHRxKAQ6?g_st=iw',
     code: 'MC5J+66H',
-    features: [
-      'Pattu Sarees & Lehengas',
-      'Men Ethnic Wear & Sherwanis',
-      'Children Festive Pavada Sets',
-      'Expert Saree Consultation',
+    amenities: [
+      'Pure Kanchipuram, Banarasi & Gadwal Pattu Sarees',
+      'Designer Wedding Lehengas & Half Sarees',
+      'Men Ethnic Kurtas, Sherwanis & Kanduvas',
+      'Expert Saree Draping & Styling Assistance',
+      'Direct Weaver Pricing Guarantee',
+      'Ready-to-Wear Fall & Pico Workshop On-Site',
     ],
     isFlagship: false,
   },
@@ -44,122 +57,184 @@ export default function StoresPage() {
   const { setIsConsultationModalOpen } = useCart();
 
   return (
-    <>
+    <div className="min-h-screen bg-[#FFFDFB] text-[#1A1918]">
+      <a href="#main-stores" className="skip-link">
+        Skip to main content
+      </a>
       <Header />
 
-      <main className="w-full pt-[116px] bg-background min-h-screen">
-        <div className="flex flex-col w-full">
-          {/* Header Banner */}
-          <section className="w-full bg-surface-container-low py-space-xl px-margin border-b border-surface-container">
-            <div className="max-w-7xl mx-auto flex flex-col gap-space-sm text-center items-center">
-              <span className="font-label-md text-label-md text-secondary uppercase tracking-widest">
-                వివాహ వేడుకల షోరూమ్స్ • TELUGU BRIDAL DESTINATIONS
-              </span>
-              <h1 className="font-display-lg text-headline-lg md:text-display-md text-primary font-bold">
-                Our Physical Flagship Stores
-              </h1>
-              <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-                Step into the grand showrooms of Kalyanam Shopping Mall in Gudur and Palakurthy, Telangana. Experience extensive collections across Women, Men &amp; Kids wear, wedding pattu sarees, and direct weaver prices.
-              </p>
+      <main id="main-stores" className="relative pt-[115px] md:pt-[135px]">
+        {/* Banner Section */}
+        <section className="bg-gradient-to-b from-[#FAF7F2] to-[#FFFDFB] border-b border-[#EAE5DC] py-16 md:py-20 text-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span className="text-gold font-bold text-xs uppercase tracking-[0.2em] block mb-3">
+              వివాహ వేడుకల షోరూమ్స్ • PHYSICAL DESTINATIONS
+            </span>
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#7A1426] mb-4">
+              Our Physical Flagship Showrooms
+            </h1>
+            <div className="divider-royal">
+              <span className="text-gold text-lg">◆</span>
             </div>
-          </section>
+            <p className="text-sm sm:text-base text-[#615D56] max-w-2xl mx-auto leading-relaxed">
+              Step into the grand shopping destinations of Kalyanam Shopping Mall in Gudur and Palakurthy, Telangana. Immerse yourself in authentic handloom silk, touch the pure zari, and enjoy royal Telugu family hospitality.
+            </p>
+          </div>
+        </section>
 
-          {/* Stores Grid */}
-          <section className="w-full py-space-xl px-margin bg-background">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-gutter">
-              {stores.map((store, idx) => (
-                <div
-                  key={idx}
-                  className={`p-space-lg rounded-2xl flex flex-col justify-between gap-space-md border transition-all ${
-                    store.isFlagship
-                      ? 'bg-surface-container-lowest border-primary shadow-lg ring-1 ring-primary/20'
-                      : 'bg-surface-container-lowest border-surface-container shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex flex-col gap-space-sm">
-                    <div className="flex items-start justify-between gap-2">
+        {/* Stores Detailed Grid */}
+        <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {STORES.map((store) => (
+              <div
+                key={store.id}
+                className="bg-white rounded-3xl overflow-hidden border border-[#EAE5DC] hover:border-gold shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col"
+              >
+                {/* Store Header Image */}
+                <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-[#FAF3EA]">
+                  <Image
+                    src={store.image}
+                    alt={store.name}
+                    fill
+                    className="object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+                  <div className="absolute top-4 left-4">
+                    <span className="badge badge-gold shadow-md text-[10px]">
+                      {store.tag}
+                    </span>
+                  </div>
+
+                  <div className="absolute top-4 right-4 bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>Open Today</span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h2 className="font-heading text-2xl font-bold mb-1">
+                      {store.name}
+                    </h2>
+                    <div className="text-xs text-gold font-medium">
+                      {store.telugu}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Store Body Information */}
+                <div className="p-6 md:p-8 flex-1 flex flex-col justify-between space-y-6">
+                  {/* Address & Timings */}
+                  <div className="space-y-3.5 text-xs text-[#555]">
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-gold text-[20px] shrink-0 mt-0.5">
+                        location_on
+                      </span>
                       <div>
-                        {store.isFlagship && (
-                          <span className="bg-primary text-on-primary font-label-sm text-label-sm px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold inline-block mb-1.5">
-                            HYDERABAD FLAGSHIP
-                          </span>
-                        )}
-                        <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-                          {store.name}
-                        </h2>
-                        <p className="font-body-sm text-body-sm text-secondary italic">
-                          {store.telugu}
-                        </p>
-                      </div>
-                      <span className="material-symbols-outlined text-secondary text-[28px]">
-                        storefront
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-2 pt-2 text-body-sm text-on-surface-variant">
-                      <div className="flex items-start gap-2">
-                        <span className="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">
-                          location_on
-                        </span>
-                        <span>{store.address}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[18px] text-primary shrink-0">
-                          phone
-                        </span>
-                        <span className="font-medium text-on-surface">{store.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[18px] text-primary shrink-0">
-                          schedule
-                        </span>
-                        <span>{store.timings}</span>
+                        <strong className="block text-charcoal font-semibold text-sm">
+                          {store.address}
+                        </strong>
+                        <span className="text-[#888]">{store.landmark}</span>
+                        <div className="mt-1 font-mono text-[11px] text-burgundy">
+                          Google Plus Code: {store.code}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="pt-2">
-                      <span className="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider block mb-2">
-                        Showroom Highlights:
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-gold text-[20px] shrink-0">
+                        schedule
                       </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {store.features.map((f, i) => (
-                          <span
-                            key={i}
-                            className="bg-surface-container px-2.5 py-1 rounded-md text-label-sm font-label-sm text-on-surface"
-                          >
-                            ✓ {f}
-                          </span>
-                        ))}
+                      <div>
+                        <span className="font-semibold text-charcoal">{store.timings}</span>
+                        <span className="text-[#888] block">All 7 Days Open for Wedding Shoppers</span>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-gold text-[20px] shrink-0">
+                        call
+                      </span>
+                      <a
+                        href={`tel:${store.phone.replace(/[^0-9+]/g, '')}`}
+                        className="text-burgundy font-bold hover:underline text-sm"
+                      >
+                        {store.phone}
+                      </a>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 pt-4 border-t border-surface-container">
+                  {/* Highlights / Amenities */}
+                  <div className="pt-4 border-t border-[#EAE5DC]">
+                    <div className="text-xs font-bold text-charcoal uppercase tracking-wider mb-3">
+                      Showroom Highlights &amp; Services
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#666]">
+                      {store.amenities.map((item, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="text-gold font-bold">✓</span>
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-4 border-t border-[#EAE5DC] flex flex-col sm:flex-row items-center gap-3">
                     <a
                       href={store.mapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors text-center font-label-md text-label-md flex items-center justify-center gap-1.5"
+                      className="btn-primary flex-1 w-full py-3 text-xs uppercase tracking-wider font-bold text-center flex items-center justify-center gap-2"
                     >
-                      <span className="material-symbols-outlined text-[18px]">directions</span>
-                      <span>Google Maps</span>
+                      <span className="material-symbols-outlined text-[17px]">directions</span>
+                      <span>Google Maps Directions</span>
                     </a>
+
                     <button
                       onClick={() => setIsConsultationModalOpen(true)}
-                      className="flex-1 py-2.5 rounded-lg bg-primary text-on-primary hover:bg-primary-container transition-colors text-center font-label-md text-label-md flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="btn-outline flex-1 w-full py-3 text-xs uppercase tracking-wider font-bold text-center flex items-center justify-center gap-2"
                     >
-                      <span className="material-symbols-outlined text-[18px]">videocam</span>
-                      <span>Virtual Tour</span>
+                      <span className="material-symbols-outlined text-[17px]">calendar_month</span>
+                      <span>Book VIP Lounge Visit</span>
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      </main>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <Footer />
-    </>
+        {/* Showroom Hospitality Promise */}
+        <section className="py-16 bg-[#FAF7F2] border-t border-[#EAE5DC]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span className="text-gold font-bold text-xs uppercase tracking-widest block mb-2">
+              అతిథి దేవో భవ • FAMILY HOSPITALITY
+            </span>
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#7A1426] mb-4">
+              Planning a Family Wedding Shopping Trip?
+            </h2>
+            <p className="text-xs sm:text-sm text-[#555] max-w-xl mx-auto leading-relaxed mb-8">
+              Let us know your arrival date in advance! Our senior bridal consultant will reserve a private viewing suite, arrange customized refreshment, and pre-curate sarees matching your color palette and budget.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="tel:+919849012345"
+                className="btn-secondary px-8 py-3.5 text-xs font-bold uppercase tracking-wider shadow"
+              >
+                Call to Reserve VIP Bridal Suite (+91 98490 12345)
+              </a>
+              <Link
+                href="/sarees"
+                className="btn-outline px-8 py-3.5 text-xs font-bold uppercase tracking-wider"
+              >
+                Preview Handloom Catalog First
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </main>
+    </div>
   );
 }

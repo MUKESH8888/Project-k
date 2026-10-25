@@ -2,834 +2,775 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useCart } from '../../components/CartContext';
-import { useAuth } from '../../components/AuthContext';
 
 export default function CheckoutPage() {
-  const { cartItems, removeFromCart, showToast } = useCart();
-  const { user, openLogin, logout } = useAuth();
-  const [selectedAddress, setSelectedAddress] = useState('addr1');
-  const [selectedShipping, setSelectedShipping] = useState('std');
-  const [selectedPayment, setSelectedPayment] = useState('upi');
-  const [couponApplied, setCouponApplied] = useState(true);
-  const [vpaInput, setVpaInput] = useState('');
-  const [vpaVerified, setVpaVerified] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
-  const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const { cartItems, cartTotal, showToast, removeFromCart, clearCart } = useCart();
+  const [step, setStep] = useState(1);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState(null);
 
-  // Fallback items if cart is empty
-  const items =
-    cartItems.length > 0
-      ? cartItems
-      : [
-          {
-            id: 1,
-            title: 'Swarna Kanchi Pure Silk Saree',
-            telugu: 'స్వర్ణ కంచి పట్టు చీర',
-            price: 42500,
-            shade: 'Sindhoori Vermilion Red',
-            image:
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuBHkT12UTrTxeV74z_cSXLY0-fFKXzu2zmXeu4dtKXKjWDwRTcYwVmSMBd6Q218o6a5xS4y9BR6-KZKbuD_-FoP69rev0kcmxQyJGeeKJuQCoZA2o6VJpFl_jheXqSyZazbKQdDt9bz5vbvtC7x8Eciwv4Ko43uFUPBsLKzzugqnshfEQbVkT7icv8PLFpIfwGXhb3EwofHAHoaIQZmL7U4dPCjfv81HKODfHgQC9s-J6AEM_SmrMOR',
-            badge: 'WEDDING',
-            quantity: 1,
-            customizations: ['Fall & Pico Included'],
-          },
-          {
-            id: 3,
-            title: 'Mayilkan Handloom Gadwal Saree',
-            telugu: 'మయిల్కన్ గద్వాల పట్టు',
-            price: 24900,
-            shade: 'Peacock Emerald & Mustard',
-            image:
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuCy0UOy__LQQHUHbfipT7aAQnxx0g8fvUMG4rKn4OS4EPMCgj2sHrLDyk0AouGi5rUfIYn_-piMH7x651LYfbD7mOQpAsqa71NKixgdMdQl5i2tg864l_uDnjBYiKZxgoHOJX9_iw7LyYP_vr0AYVkytM3GsexirfEI4e9KirlJticpCaJo2Oh3QLuf7TuU3fo_aJVtMWcYOG4CLUMv3ey5L6gj_q-fUyGzssTCgzLSSOc8Gnvkxi_c',
-            badge: 'HANDLOOM',
-            quantity: 1,
-            customizations: ['Silk Kuchu Done'],
-          },
-        ];
+  const [deliveryDetails, setDeliveryDetails] = useState({
+    name: 'Smt. Kavitha Reddy',
+    phone: '+91 98491 55667',
+    email: 'kavitha.reddy@gmail.com',
+    address: 'Flat 402, Sri Sai Residency, Near Hanuman Temple, Ashok Nagar',
+    pincode: '506001',
+    city: 'Warangal',
+    state: 'Telangana',
+  });
 
-  const subtotal = items.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
-  const discount = couponApplied ? 2500 : 0;
-  const shippingFee = selectedShipping === 'exp' ? 250 : 0;
-  const grandTotal = Math.max(0, subtotal - discount + shippingFee);
+  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'cod'
+  const [upiId, setUpiId] = useState('kavitha.reddy@oksbi');
+  const [cardDetails, setCardDetails] = useState({
+    number: '',
+    name: '',
+    expiry: '',
+    cvv: '',
+  });
 
-  const handleVerifyVPA = (e) => {
-    e.preventDefault();
-    if (!vpaInput.includes('@')) {
-      showToast('Please enter a valid UPI VPA (e.g. name@okaxis)');
-      return;
+  const subtotal = cartTotal;
+  const deliveryFee = subtotal > 5000 ? 0 : 199;
+  const couponDiscount = couponApplied ? Math.round(subtotal * 0.15) : 0;
+  const total = Math.max(0, subtotal + deliveryFee - couponDiscount);
+
+  const formatPrice = (price) => `₹${Number(price || 0).toLocaleString('en-IN')}`;
+
+  const handleApplyCoupon = () => {
+    if (couponCode.trim().toLowerCase() === 'kalyanam15') {
+      setCouponApplied(true);
+      showToast('Auspicious 15% discount applied successfully!');
+    } else {
+      showToast('Invalid coupon code. Try code: KALYANAM15');
     }
-    setVpaVerified(true);
-    showToast('UPI ID Verified Successfully: Sravanthi Reddy');
   };
 
-  const handlePlaceOrder = async () => {
-    setIsProcessing(true);
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    if (cartItems.length === 0 && !placedOrder) {
+      showToast('Your bridal shopping bag is empty.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const res = await fetch('/api/orders', {
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: user ? user.name : 'Sunitha Rao',
-          customerPhone: user?.phone || '+91 98491 23456',
-          customerEmail: user?.email || 'sunitha@kalyanammall.com',
-          shippingAddress:
-            selectedAddress === 'addr1'
-              ? 'Flat 402, Sri Krishna Nilayam, Road No. 10, Banjara Hills, Hyderabad, Telangana - 500034'
-              : 'Door 3-6-288, Himayatnagar Main Road, Near Liberty Circle, Hyderabad, Telangana - 500029',
-          items: items.map((item) => ({
-            id: item.id,
+          customerName: deliveryDetails.name,
+          customerEmail: deliveryDetails.email,
+          customerPhone: deliveryDetails.phone,
+          shippingAddress: `${deliveryDetails.address}, ${deliveryDetails.city}, ${deliveryDetails.state} - ${deliveryDetails.pincode}`,
+          totalAmount: total,
+          paymentMethod:
+            paymentMethod === 'upi'
+              ? `UPI (${upiId || 'Instant App'})`
+              : paymentMethod === 'cod'
+              ? 'Cash on Delivery (COD)'
+              : 'Credit / Debit Card',
+          items: cartItems.map((item) => ({
+            productId: item.id,
             title: item.title,
             price: item.price,
-            quantity: item.quantity || 1,
-            shade: item.shade,
-            customizations: item.customizations || ['Fall & Pico Included'],
+            quantity: item.quantity,
+            shade: item.shade || 'Ceremonial Red',
           })),
-          total: grandTotal,
-          paymentMethod: selectedPayment,
-          shippingMethod: selectedShipping,
         }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
       if (data.success && data.order) {
-        setConfirmedOrder(data.order);
+        setPlacedOrder(data.order);
+        clearCart();
+        showToast(`Sacred order confirmed! ID: ${data.order.id}`);
+        setStep(4);
       } else {
-        setConfirmedOrder({ id: 'ORD-' + Math.floor(10000 + Math.random() * 90000), total: grandTotal });
+        throw new Error(data.error || 'Failed to complete order');
       }
-      setIsProcessing(false);
-      setOrderConfirmed(true);
-      showToast('Auspicious celebration! Your wedding order is confirmed.');
     } catch (err) {
       console.error('Order error:', err);
-      setConfirmedOrder({ id: 'ORD-98214', total: grandTotal });
-      setIsProcessing(false);
-      setOrderConfirmed(true);
-      showToast('Order confirmed successfully!');
+      showToast(err.message || 'Error submitting order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const stepLabels = ['Bag Review', 'Delivery Address', 'Payment', 'Confirmation'];
+
   return (
-    <>
+    <div className="min-h-screen bg-cream text-charcoal flex flex-col justify-between">
+      <a href="#main-checkout" className="skip-link">
+        Skip to main content
+      </a>
       <Header />
 
-      <main className="w-full pt-[116px] bg-background min-h-screen">
-        <div className="flex flex-col w-full">
-          {/* ============================================================
-              Step Progress Indicator
-             ============================================================ */}
-          <div className="w-full bg-surface-container-low py-space-md shadow-sm border-b border-surface-container">
-            <div className="max-w-7xl mx-auto px-margin-mobile md:px-margin">
-              <div className="flex items-center justify-between max-w-4xl mx-auto relative">
-                <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-[2px] bg-surface-variant z-0 hidden md:block">
-                  <div className="h-full bg-secondary w-1/3 transition-all duration-500" />
-                </div>
-
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="w-9 h-9 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-bold text-label-md shadow-sm">
-                    <span className="material-symbols-outlined text-[18px]">check</span>
-                  </div>
-                  <span className="font-label-md text-label-md text-on-surface mt-2 font-semibold">
-                    1. Bag
-                  </span>
-                  <span className="font-label-sm text-label-sm text-secondary hidden md:inline">
-                    {items.length} Items
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-label-md shadow-md ring-4 ring-primary-container/20">
-                    2
-                  </div>
-                  <span className="font-label-md text-label-md text-primary font-bold mt-2">
-                    2. Delivery
-                  </span>
-                  <span className="font-label-sm text-label-sm text-primary font-medium hidden md:inline">
-                    In Progress
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="w-9 h-9 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-label-md">
-                    3
-                  </div>
-                  <span className="font-label-md text-label-md text-on-surface-variant mt-2 font-medium">
-                    3. Payment
-                  </span>
-                  <span className="font-label-sm text-label-sm text-surface-dim hidden md:inline">
-                    Upcoming
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="w-9 h-9 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-label-md">
-                    4
-                  </div>
-                  <span className="font-label-md text-label-md text-on-surface-variant mt-2 font-medium">
-                    4. Confirmation
-                  </span>
-                  <span className="font-label-sm text-label-sm text-surface-dim hidden md:inline">
-                    Final Step
-                  </span>
-                </div>
-              </div>
+      <main id="main-checkout" className="flex-1 relative pt-[115px] md:pt-[135px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Breadcrumb & Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-border">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-burgundy font-bold">
+                Kalyanam Sacred Bridal Checkout
+              </p>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold text-burgundy-900 mt-1">
+                Complete Your Sacred Order
+              </h1>
             </div>
+            <Link
+              href="/sarees"
+              className="text-sm text-charcoal/70 hover:text-burgundy transition-colors flex items-center gap-1 font-medium"
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              Continue Exploring Weaves
+            </Link>
           </div>
 
-          {/* ============================================================
-              Main Checkout Grid
-             ============================================================ */}
-          <div className="max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-xl w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
-              {/* Left Column: Account, Address, Shipping, Payment */}
-              <div className="lg:col-span-7 flex flex-col gap-space-lg">
-                {/* 1. Account Box */}
-                <div className="bg-surface-container-lowest p-space-md md:p-space-lg rounded-xl shadow-sm flex items-center justify-between border border-surface-container">
-                  <div className="flex items-center gap-space-md">
-                    <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0">
-                      <span className="material-symbols-outlined text-[20px]">
-                        {user ? 'person_check' : 'account_circle'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">
-                        {user ? (user.role === 'admin' ? 'Administrator Account' : 'Telugu Matrimonial Account') : 'Guest / Member Checkout'}
-                      </p>
-                      <h2 className="font-title-md text-title-md text-on-surface font-bold">
-                        {user ? user.name : 'Sunitha Rao'}{' '}
-                        <span className="font-body-sm text-body-sm text-on-surface-variant font-normal">
-                          ({user ? (user.phone || user.email) : '+91 98491 XXXXX'})
-                        </span>
-                      </h2>
-                    </div>
-                  </div>
+          {/* Stepper */}
+          <nav aria-label="Checkout Steps" className="flex items-center gap-2 mb-10 overflow-x-auto pb-2">
+            {stepLabels.map((label, i) => {
+              const stepNumber = i + 1;
+              const isActive = step === stepNumber;
+              const isPassed = step > stepNumber;
+              return (
+                <div key={i} className="flex items-center gap-2">
                   <button
-                    onClick={openLogin}
-                    className="font-label-sm text-label-sm text-primary hover:text-primary-container font-semibold uppercase tracking-wider underline cursor-pointer"
+                    type="button"
+                    onClick={() => {
+                      if (stepNumber < step && !isSubmitting) setStep(stepNumber);
+                    }}
+                    disabled={stepNumber > step}
+                    className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all whitespace-nowrap shadow-sm ${
+                      isActive
+                        ? 'bg-burgundy text-white shadow-md'
+                        : isPassed
+                        ? 'bg-gold/20 text-burgundy hover:bg-gold/30 cursor-pointer'
+                        : 'bg-surface-low text-charcoal/50 cursor-not-allowed'
+                    }`}
                   >
-                    {user ? 'Switch Account' : 'Sign In'}
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                        isActive ? 'bg-gold text-charcoal' : isPassed ? 'bg-burgundy text-white' : 'bg-charcoal/10'
+                      }`}
+                    >
+                      {isPassed ? '✓' : stepNumber}
+                    </span>
+                    {label}
                   </button>
+                  {i < stepLabels.length - 1 && (
+                    <span className="material-symbols-outlined text-[16px] text-charcoal/30">
+                      chevron_right
+                    </span>
+                  )}
                 </div>
+              );
+            })}
+          </nav>
 
-                {/* 2. Delivery Address */}
-                <div className="bg-surface-container-lowest p-space-md md:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md border border-surface-container">
-                  <div className="flex items-center justify-between pb-space-sm border-b border-surface-container">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-secondary text-[22px]">
-                        pin_drop
-                      </span>
-                      <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                        Delivery Address
-                      </h2>
-                    </div>
-                    <button className="font-label-sm text-label-sm text-secondary hover:text-on-secondary-container font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer">
-                      <span className="material-symbols-outlined text-[16px]">add</span> Add New
-                    </button>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Step Content */}
+            <div className="lg:col-span-7 space-y-6">
+              {/* STEP 1: CART REVIEW */}
+              {step === 1 && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-border shadow-sm">
+                  <h2 className="font-heading text-xl font-bold text-burgundy-900 mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-gold">shopping_bag</span>
+                    Review Your Sacred Bridal Bag ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
+                  </h2>
 
-                  {/* Address 1: Primary */}
-                  <div
-                    onClick={() => setSelectedAddress('addr1')}
-                    className={`p-space-md rounded-lg shadow-sm relative overflow-hidden cursor-pointer transition-all ${
-                      selectedAddress === 'addr1'
-                        ? 'bg-surface-container-low ring-2 ring-primary'
-                        : 'bg-surface opacity-75 hover:opacity-100'
-                    }`}
-                  >
-                    <div className="absolute top-0 right-0 bg-secondary text-on-secondary font-label-sm text-label-sm px-3 py-1 rounded-bl-lg font-semibold tracking-wider">
-                      PRIMARY RESIDENCE
-                    </div>
-                    <div className="flex items-start gap-space-md">
-                      <div className="pt-0.5">
-                        <input
-                          checked={selectedAddress === 'addr1'}
-                          onChange={() => setSelectedAddress('addr1')}
-                          className="w-4 h-4 accent-primary cursor-pointer"
-                          type="radio"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-title-md text-title-md text-on-surface font-bold">
-                            Sunitha Rao
-                          </span>
-                          <span className="bg-surface-container text-on-surface-variant text-label-sm font-label-sm px-2 py-0.5 rounded">
-                            Home
-                          </span>
-                        </div>
-                        <p className="font-body-md text-body-md text-on-surface-variant mt-1.5 leading-relaxed">
-                          Flat 402, Sri Krishna Nilayam, Road No. 10, Banjara Hills, Hyderabad, Telangana - 500034
-                        </p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[16px] text-secondary">
-                            phone
-                          </span>
-                          <span>+91 98491 23456</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Address 2: Father's Residence */}
-                  <div
-                    onClick={() => setSelectedAddress('addr2')}
-                    className={`p-space-md rounded-lg flex items-start gap-space-md cursor-pointer transition-all ${
-                      selectedAddress === 'addr2'
-                        ? 'bg-surface-container-low ring-2 ring-primary'
-                        : 'bg-surface opacity-75 hover:opacity-100'
-                    }`}
-                  >
-                    <div className="pt-0.5">
-                      <input
-                        checked={selectedAddress === 'addr2'}
-                        onChange={() => setSelectedAddress('addr2')}
-                        className="w-4 h-4 accent-primary cursor-pointer"
-                        type="radio"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-title-md text-title-md text-on-surface font-bold">
-                          Raghavendra Rao (Father&apos;s Residence)
-                        </span>
-                        <span className="bg-surface-container text-on-surface-variant text-label-sm font-label-sm px-2 py-0.5 rounded">
-                          Family
+                  {cartItems.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 rounded-full bg-cream-card flex items-center justify-center mx-auto mb-4 border border-border">
+                        <span className="material-symbols-outlined text-3xl text-burgundy">
+                          shopping_bag
                         </span>
                       </div>
-                      <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                        Door 3-6-288, Himayatnagar Main Road, Near Liberty Circle, Hyderabad, Telangana - 500029
+                      <p className="font-heading text-lg font-bold text-charcoal mb-2">
+                        Your Bridal Bag is Empty
                       </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Transit & Delivery Method */}
-                <div className="bg-surface-container-lowest p-space-md md:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md border border-surface-container">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary text-[22px]">
-                      local_shipping
-                    </span>
-                    <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                      Transit &amp; Delivery Method
-                    </h2>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">
-                    <div
-                      onClick={() => setSelectedShipping('std')}
-                      className={`p-space-md rounded-lg relative cursor-pointer border transition-all ${
-                        selectedShipping === 'std'
-                          ? 'bg-surface-container-low border-primary ring-1 ring-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div className="flex items-start gap-space-sm">
-                        <input
-                          checked={selectedShipping === 'std'}
-                          onChange={() => setSelectedShipping('std')}
-                          className="mt-1 accent-primary"
-                          type="radio"
-                        />
-                        <div>
-                          <span className="font-title-md text-title-md text-on-surface font-bold block">
-                            Standard Insured Courier
-                          </span>
-                          <span className="font-label-sm text-label-sm text-tertiary-container font-semibold mt-0.5 block">
-                            Complimentary (₹0)
-                          </span>
-                          <span className="font-body-sm text-body-sm text-on-surface-variant mt-1 block">
-                            Safe door delivery in 2-3 business days via BlueDart Air.
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setSelectedShipping('exp')}
-                      className={`p-space-md rounded-lg relative cursor-pointer border transition-all ${
-                        selectedShipping === 'exp'
-                          ? 'bg-surface-container-low border-primary ring-1 ring-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div className="flex items-start gap-space-sm">
-                        <input
-                          checked={selectedShipping === 'exp'}
-                          onChange={() => setSelectedShipping('exp')}
-                          className="mt-1 accent-primary"
-                          type="radio"
-                        />
-                        <div className="w-full">
-                          <div className="flex items-center justify-between">
-                            <span className="font-title-md text-title-md text-on-surface font-bold">
-                              Express Same-Day
-                            </span>
-                            <span className="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded font-bold">
-                              HYD ONLY
-                            </span>
-                          </div>
-                          <span className="font-label-sm text-label-sm text-primary font-bold mt-0.5 block">
-                            ₹250
-                          </span>
-                          <span className="font-body-sm text-body-sm text-on-surface-variant mt-1 block">
-                            Dedicated Jubilee Hills logistics by 8:00 PM today.
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Complimentary Master-Weaver Finishes */}
-                <div className="bg-surface-container-low p-space-md rounded-xl flex items-start gap-space-md border border-secondary-fixed/40">
-                  <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-[20px]">
-                      content_cut
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-title-md text-title-md text-on-surface font-bold">
-                        Complimentary Master-Weaver Finishes
-                      </h3>
-                      <span className="bg-secondary text-on-secondary font-label-sm text-label-sm px-2 py-0.5 rounded font-semibold">
-                        APPLIED
-                      </span>
-                    </div>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                      Pure cotton matching Fall attachment, delicate Pico edging, and traditional hand-twisted silk Kuchu tassels are custom-crafted by our in-house artisan team prior to dispatch.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 5. Payment Preference */}
-                <div className="bg-surface-container-lowest p-space-md md:p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md border border-surface-container">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-secondary text-[22px]">
-                        account_balance_wallet
-                      </span>
-                      <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                        Payment Preference
-                      </h2>
-                    </div>
-                    <span className="font-label-sm text-label-sm text-tertiary-container font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">
-                        verified_user
-                      </span>{' '}
-                      256-Bit SSL Secured
-                    </span>
-                  </div>
-
-                  <div className="space-y-space-sm">
-                    {/* UPI Option */}
-                    <div
-                      className={`p-space-md rounded-lg border transition-all ${
-                        selectedPayment === 'upi'
-                          ? 'bg-surface-container-low border-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div
-                        onClick={() => setSelectedPayment('upi')}
-                        className="flex items-center justify-between cursor-pointer"
+                      <p className="text-sm text-charcoal/70 mb-6 max-w-sm mx-auto">
+                        Explore our handcrafted Kanchipuram, Gadwal, and Banarasi pattu weaves to begin.
+                      </p>
+                      <Link
+                        href="/sarees"
+                        className="btn-gold inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider"
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            checked={selectedPayment === 'upi'}
-                            onChange={() => setSelectedPayment('upi')}
-                            className="accent-primary"
-                            type="radio"
-                          />
-                          <span className="font-title-md text-title-md text-on-surface font-bold">
-                            UPI Instant Transfer
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant">
-                          <span className="bg-surface px-2 py-1 rounded shadow-sm">GPay</span>
-                          <span className="bg-surface px-2 py-1 rounded shadow-sm">PhonePe</span>
-                          <span className="bg-surface px-2 py-1 rounded shadow-sm">Paytm</span>
-                        </div>
-                      </div>
-
-                      {selectedPayment === 'upi' && (
-                        <div className="mt-4 pt-4 bg-surface-container-lowest p-4 rounded-lg flex flex-col md:flex-row items-center gap-space-md border border-surface-container">
-                          <div className="bg-surface p-3 rounded-lg shadow-inner flex flex-col items-center shrink-0">
-                            {/* High Quality Styled QR Code */}
-                            <svg
-                              className="w-28 h-28 text-on-surface"
-                              fill="currentColor"
-                              viewBox="0 0 100 100"
-                            >
-                              <path d="M0 0h36v36H0zM8 8h20v20H8zM64 0h36v36H64zM72 8h20v20H72zM0 64h36v36H0zM8 72h20v20H8z" />
-                              <path d="M44 8h12v12H44zM44 28h12v12H44zM8 44h12v12H8zM28 44h12v12H28zM44 44h12v12H44zM64 44h12v12H64zM84 44h8v8h-8zM84 64h8v8h-8zM44 64h12v12H44zM44 84h12v12H44zM64 72h20v8H64zM72 84h20v12H72zM16 16h4v4h-4zM80 16h4v4h-4zM16 80h4v4h-4z" />
-                            </svg>
-                            <span className="font-label-sm text-label-sm text-on-surface-variant mt-1 font-mono">
-                              Scan to Pay
-                            </span>
-                          </div>
-                          <div className="flex-1 w-full flex flex-col gap-2">
-                            <p className="font-body-sm text-body-sm text-on-surface-variant">
-                              Scan using your preferred UPI app on mobile or enter your registered Virtual Payment Address (VPA).
-                            </p>
-                            <form onSubmit={handleVerifyVPA} className="flex items-center gap-2 mt-1">
-                              <input
-                                className="bg-surface px-3 py-2 text-body-sm font-body-sm rounded flex-1 focus:outline-none border border-surface-dim/40"
-                                placeholder="e.g. sunitharao@okaxis"
-                                type="text"
-                                value={vpaInput}
-                                onChange={(e) => setVpaInput(e.target.value)}
-                              />
-                              <button
-                                type="submit"
-                                className="bg-secondary text-on-secondary px-4 py-2 font-label-sm text-label-sm font-semibold rounded hover:bg-secondary-container hover:text-on-secondary-container transition-colors shrink-0 cursor-pointer"
-                              >
-                                {vpaVerified ? 'Verified ✓' : 'Verify VPA'}
-                              </button>
-                            </form>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card & NetBanking Options */}
-                    <div
-                      onClick={() => setSelectedPayment('card')}
-                      className={`p-space-md rounded-lg flex items-center justify-between cursor-pointer border transition-all ${
-                        selectedPayment === 'card'
-                          ? 'bg-surface-container-low border-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          checked={selectedPayment === 'card'}
-                          onChange={() => setSelectedPayment('card')}
-                          className="accent-primary"
-                          type="radio"
-                        />
-                        <span className="font-title-md text-title-md text-on-surface font-semibold">
-                          Credit / Debit Card &amp; Flexi EMI
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-label-sm font-label-sm text-on-surface-variant">
-                        <span className="bg-surface-container-high px-2 py-0.5 rounded">Visa</span>
-                        <span className="bg-surface-container-high px-2 py-0.5 rounded">
-                          MasterCard
-                        </span>
-                        <span className="bg-surface-container-high px-2 py-0.5 rounded">RuPay</span>
-                        <span className="bg-surface-container-high px-2 py-0.5 rounded">Amex</span>
-                      </div>
-                    </div>
-
-                    <div
-                      onClick={() => setSelectedPayment('nb')}
-                      className={`p-space-md rounded-lg flex items-center justify-between cursor-pointer border transition-all ${
-                        selectedPayment === 'nb'
-                          ? 'bg-surface-container-low border-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          checked={selectedPayment === 'nb'}
-                          onChange={() => setSelectedPayment('nb')}
-                          className="accent-primary"
-                          type="radio"
-                        />
-                        <span className="font-title-md text-title-md text-on-surface font-semibold">
-                          Net Banking
-                        </span>
-                      </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">
-                        SBI • HDFC • ICICI • Axis &amp; 48 others
-                      </span>
-                    </div>
-
-                    <div
-                      onClick={() => setSelectedPayment('cod')}
-                      className={`p-space-md rounded-lg flex items-center justify-between cursor-pointer border transition-all ${
-                        selectedPayment === 'cod'
-                          ? 'bg-surface-container-low border-primary'
-                          : 'bg-surface border-surface-container'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          checked={selectedPayment === 'cod'}
-                          onChange={() => setSelectedPayment('cod')}
-                          className="accent-primary"
-                          type="radio"
-                        />
-                        <span className="font-title-md text-title-md text-on-surface font-semibold">
-                          Cash on Delivery (COD)
-                        </span>
-                      </div>
-                      <span className="font-label-sm text-label-sm text-secondary font-semibold">
-                        Available up to ₹50,000
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trust Pillar Badges */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm pt-2">
-                  <div className="bg-surface-container-lowest p-3 rounded-lg text-center flex flex-col items-center border border-surface-container">
-                    <span className="material-symbols-outlined text-secondary text-[22px] mb-1">
-                      verified
-                    </span>
-                    <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                      Pure Silk Mark
-                    </span>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      Central Silk Board
-                    </span>
-                  </div>
-                  <div className="bg-surface-container-lowest p-3 rounded-lg text-center flex flex-col items-center border border-surface-container">
-                    <span className="material-symbols-outlined text-secondary text-[22px] mb-1">
-                      security
-                    </span>
-                    <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                      Transit Insurance
-                    </span>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      100% Value Covered
-                    </span>
-                  </div>
-                  <div className="bg-surface-container-lowest p-3 rounded-lg text-center flex flex-col items-center border border-surface-container">
-                    <span className="material-symbols-outlined text-secondary text-[22px] mb-1">
-                      lock
-                    </span>
-                    <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                      256-Bit SSL
-                    </span>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      Bank Grade Security
-                    </span>
-                  </div>
-                  <div className="bg-surface-container-lowest p-3 rounded-lg text-center flex flex-col items-center border border-surface-container">
-                    <span className="material-symbols-outlined text-secondary text-[22px] mb-1">
-                      workspace_premium
-                    </span>
-                    <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                      Pure Silver Zari
-                    </span>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      Lab Authenticated
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column (Sticky): Order Summary & Payment Button */}
-              <div className="lg:col-span-5 flex flex-col gap-space-lg lg:sticky lg:top-[168px]">
-                <div className="bg-surface-container-lowest p-space-md md:p-space-lg rounded-xl shadow-md flex flex-col gap-space-md border border-surface-container">
-                  <div className="flex items-center justify-between pb-space-xs border-b border-surface-container">
-                    <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                      Order Summary
-                    </h2>
-                    <span className="font-label-sm text-label-sm text-secondary font-bold">
-                      {items.length} HEIRLOOM ITEMS
-                    </span>
-                  </div>
-
-                  {/* Saree Items List */}
-                  <div className="flex flex-col gap-space-md divide-y divide-surface-container">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex gap-space-md pt-2 first:pt-0">
-                        <div className="w-20 h-28 rounded-lg overflow-hidden bg-surface-container shrink-0 relative">
-                          <img
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                            src={item.image}
-                          />
-                          <span className="absolute bottom-1 right-1 bg-tertiary-container text-on-tertiary font-label-sm text-[9px] px-1 py-0.5 rounded">
-                            {item.badge}
-                          </span>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div>
-                            <div className="flex items-start justify-between gap-1">
-                              <h3 className="font-title-md text-title-md text-on-surface font-bold leading-snug">
-                                {item.title}
-                              </h3>
-                              <span className="font-title-md text-title-md text-on-surface font-bold shrink-0">
-                                ₹{item.price.toLocaleString('en-IN')}
-                              </span>
-                            </div>
-                            <p className="font-label-sm text-label-sm text-secondary italic">
-                              {item.telugu}
-                            </p>
-                            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                              Shade: <span className="font-semibold text-on-surface">{item.shade}</span> • Qty: {item.quantity || 1}
-                            </p>
-                          </div>
-                          <div className="flex items-center justify-between pt-2">
-                            <span className="font-label-sm text-label-sm text-tertiary-container font-semibold flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">
-                                check_circle
-                              </span>{' '}
-                              Fall &amp; Pico Included
-                            </span>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="font-label-sm text-label-sm text-outline hover:text-error transition-colors cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Coupon Block */}
-                  {couponApplied ? (
-                    <div className="bg-surface-container-low p-space-sm rounded-lg flex items-center justify-between border border-secondary-fixed/40">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-secondary text-[20px]">
-                          sell
-                        </span>
-                        <div>
-                          <span className="font-label-sm text-label-sm text-on-surface font-bold block">
-                            KALYANAMBRIDAL
-                          </span>
-                          <span className="font-label-sm text-label-sm text-secondary block">
-                            Muhurtham auspicious savings applied
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-title-md text-title-md text-tertiary-container font-bold">
-                          -₹2,500
-                        </span>
-                        <button
-                          onClick={() => setCouponApplied(false)}
-                          className="text-outline hover:text-on-surface text-label-sm cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                      </div>
+                        Explore Handloom Sarees
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </Link>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setCouponApplied(true)}
-                      className="text-primary font-semibold text-body-sm hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">sell</span>
-                      <span>Apply Bridal Code (KALYANAMBRIDAL)</span>
-                    </button>
-                  )}
+                    <div className="space-y-4">
+                      {cartItems.map((item, idx) => (
+                        <div
+                          key={item.id || idx}
+                          className="flex gap-4 p-4 rounded-xl border border-border bg-cream-card/50 hover:bg-cream-card transition-colors items-center"
+                        >
+                          <div className="w-20 h-24 rounded-lg overflow-hidden relative shrink-0 border border-border bg-white">
+                            {item.image ? (
+                              <Image
+                                src={item.image}
+                                alt={item.title}
+                                fill
+                                sizes="80px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-charcoal/40">
+                                <span className="material-symbols-outlined text-3xl">checkroom</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full inline-block mb-1">
+                              {item.badge || 'SILK MARK'}
+                            </span>
+                            <h3 className="font-bold text-sm text-charcoal truncate">{item.title}</h3>
+                            <p className="text-xs text-charcoal/60 mt-0.5">{item.shade || 'Ceremonial Silk'}</p>
+                            <p className="text-xs text-emerald-rich font-medium mt-1 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">verified</span>
+                              Fall &amp; Pico complimentary done
+                            </p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <span className="text-xs text-charcoal/70">Qty: {item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeFromCart(item.id)}
+                                className="text-xs text-rose-700 hover:text-rose-900 font-semibold underline"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="font-bold text-burgundy-900 block text-base">
+                              {formatPrice(item.price * item.quantity)}
+                            </span>
+                            {item.originalPrice && item.originalPrice > item.price && (
+                              <span className="text-xs text-charcoal/40 line-through">
+                                {formatPrice(item.originalPrice * item.quantity)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
 
-                  {/* Calculations */}
-                  <div className="flex flex-col gap-2 pt-2">
-                    <div className="flex justify-between font-body-sm text-body-sm text-on-surface-variant">
-                      <span>Saree Heritage Subtotal</span>
-                      <span className="font-semibold text-on-surface">
-                        ₹{subtotal.toLocaleString('en-IN')}
-                      </span>
+                      {/* Coupon code box */}
+                      <div className="p-4 rounded-xl border border-gold/30 bg-gold/5 mt-6">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-burgundy-900 mb-2">
+                          Privilege Wedding Coupon Code
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            placeholder="Enter KALYANAM15"
+                            className="input-field text-sm uppercase flex-1"
+                            disabled={couponApplied}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyCoupon}
+                            disabled={couponApplied || !couponCode.trim()}
+                            className="btn-gold px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                          >
+                            {couponApplied ? 'Applied' : 'Apply'}
+                          </button>
+                        </div>
+                        {couponApplied && (
+                          <p className="text-xs text-emerald-rich font-bold mt-2 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                            Auspicious 15% discount active! Saved {formatPrice(couponDiscount)}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setStep(2)}
+                        disabled={cartItems.length === 0}
+                        className="w-full btn-gold py-3.5 rounded-xl font-bold uppercase tracking-wider text-sm mt-6 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow"
+                      >
+                        Proceed to Delivery Address
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </button>
                     </div>
-                    {couponApplied && (
-                      <div className="flex justify-between font-body-sm text-body-sm text-tertiary-container font-semibold">
-                        <span>Festive Bridal Privilege Code</span>
-                        <span>-₹2,500</span>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2: DELIVERY DETAILS */}
+              {step === 2 && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-border shadow-sm">
+                  <h2 className="font-heading text-xl font-bold text-burgundy-900 mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-gold">local_shipping</span>
+                    Insured Wedding Delivery Address
+                  </h2>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setStep(3);
+                    }}
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={deliveryDetails.name}
+                          onChange={(e) => setDeliveryDetails({ ...deliveryDetails, name: e.target.value })}
+                          className="input-field w-full text-sm"
+                          placeholder="e.g., Smt. Sunitha Reddy"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                          Mobile / WhatsApp Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={deliveryDetails.phone}
+                          onChange={(e) => setDeliveryDetails({ ...deliveryDetails, phone: e.target.value })}
+                          className="input-field w-full text-sm"
+                          placeholder="+91 98491 XXXXX"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                        Email Address for Order Updates *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={deliveryDetails.email}
+                        onChange={(e) => setDeliveryDetails({ ...deliveryDetails, email: e.target.value })}
+                        className="input-field w-full text-sm"
+                        placeholder="you@domain.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                        Complete Postal Address (House / Flat No, Street, Landmark) *
+                      </label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={deliveryDetails.address}
+                        onChange={(e) => setDeliveryDetails({ ...deliveryDetails, address: e.target.value })}
+                        className="input-field w-full text-sm"
+                        placeholder="House no., Landmark, Street, Colony..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                          Pincode *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          value={deliveryDetails.pincode}
+                          onChange={(e) =>
+                            setDeliveryDetails({
+                              ...deliveryDetails,
+                              pincode: e.target.value.replace(/\D/g, '').slice(0, 6),
+                            })
+                          }
+                          className="input-field w-full text-sm"
+                          placeholder="6-digit pincode"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                          City / Town *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={deliveryDetails.city}
+                          onChange={(e) => setDeliveryDetails({ ...deliveryDetails, city: e.target.value })}
+                          className="input-field w-full text-sm"
+                          placeholder="e.g. Warangal / Hyderabad"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1.5">
+                          State *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={deliveryDetails.state}
+                          onChange={(e) => setDeliveryDetails({ ...deliveryDetails, state: e.target.value })}
+                          className="input-field w-full text-sm"
+                          placeholder="Telangana / AP"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-600 text-lg">verified_user</span>
+                      Orders above ₹5,000 receive complimentary insured door delivery with tamper-evident seal.
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="btn-outline px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider"
+                      >
+                        Back to Bag
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn-gold flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+                      >
+                        Proceed to Payment
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* STEP 3: PAYMENT METHOD */}
+              {step === 3 && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-border shadow-sm">
+                  <h2 className="font-heading text-xl font-bold text-burgundy-900 mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-gold">payments</span>
+                    Select Secure Payment Option
+                  </h2>
+
+                  <form onSubmit={handlePlaceOrder} className="space-y-6">
+                    {/* Payment Options Selector */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <label
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'upi'
+                            ? 'border-burgundy bg-burgundy/5 text-burgundy'
+                            : 'border-border hover:border-burgundy/30 bg-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="upi"
+                          checked={paymentMethod === 'upi'}
+                          onChange={() => setPaymentMethod('upi')}
+                          className="sr-only"
+                        />
+                        <span className="material-symbols-outlined text-3xl mb-1 text-gold">
+                          qr_code_scanner
+                        </span>
+                        <span className="text-sm font-bold">UPI / QR</span>
+                        <span className="text-[10px] text-charcoal/60 mt-0.5">GPay, PhonePe, Paytm</span>
+                      </label>
+
+                      <label
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'card'
+                            ? 'border-burgundy bg-burgundy/5 text-burgundy'
+                            : 'border-border hover:border-burgundy/30 bg-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="card"
+                          checked={paymentMethod === 'card'}
+                          onChange={() => setPaymentMethod('card')}
+                          className="sr-only"
+                        />
+                        <span className="material-symbols-outlined text-3xl mb-1 text-gold">credit_card</span>
+                        <span className="text-sm font-bold">Card</span>
+                        <span className="text-[10px] text-charcoal/60 mt-0.5">Visa, RuPay, MC</span>
+                      </label>
+
+                      <label
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'cod'
+                            ? 'border-burgundy bg-burgundy/5 text-burgundy'
+                            : 'border-border hover:border-burgundy/30 bg-white'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="cod"
+                          checked={paymentMethod === 'cod'}
+                          onChange={() => setPaymentMethod('cod')}
+                          className="sr-only"
+                        />
+                        <span className="material-symbols-outlined text-3xl mb-1 text-gold">
+                          account_balance_wallet
+                        </span>
+                        <span className="text-sm font-bold">Pay on Delivery</span>
+                        <span className="text-[10px] text-charcoal/60 mt-0.5">Cash / UPI at Door</span>
+                      </label>
+                    </div>
+
+                    {/* Method Specific Details */}
+                    {paymentMethod === 'upi' && (
+                      <div className="p-4 rounded-xl bg-cream-card border border-border space-y-3">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70">
+                          Enter UPI Virtual Payment Address (VPA)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={upiId}
+                          onChange={(e) => setUpiId(e.target.value)}
+                          placeholder="e.g. mobile@upi, username@okhdfcbank"
+                          className="input-field w-full text-sm"
+                        />
+                        <div className="flex items-center gap-2 text-xs text-charcoal/60">
+                          <span className="material-symbols-outlined text-sm text-emerald-rich">
+                            lock_clock
+                          </span>
+                          Instant approval request will be sent to your UPI App upon clicking Place Order.
+                        </div>
                       </div>
                     )}
-                    <div className="flex justify-between font-body-sm text-body-sm text-on-surface-variant">
-                      <span className="flex items-center gap-1">
-                        Complimentary Finishing (Fall, Pico &amp; Kuchu)
-                        <span className="text-secondary font-semibold text-[11px] bg-secondary-fixed/50 px-1 rounded">
-                          ₹900 VALUE
-                        </span>
-                      </span>
-                      <span className="font-bold text-tertiary-container uppercase text-label-sm">
-                        FREE
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-body-sm text-body-sm text-on-surface-variant">
-                      <span>Insured Express Air Transit</span>
-                      <span className="font-bold text-tertiary-container uppercase text-label-sm">
-                        {shippingFee === 0 ? 'FREE' : `₹${shippingFee}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-body-sm text-body-sm text-on-surface-variant">
-                      <span>Integrated GST (5% Included)</span>
-                      <span>₹{Math.round(grandTotal * 0.05).toLocaleString('en-IN')}</span>
-                    </div>
 
-                    <div className="my-2 h-[1px] bg-surface-container" />
+                    {paymentMethod === 'card' && (
+                      <div className="p-4 rounded-xl bg-cream-card border border-border space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                            Card Number
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="4532 •••• •••• 8890"
+                            value={cardDetails.number}
+                            onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
+                            className="input-field w-full text-sm font-mono"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                              Expiry Date
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="MM/YY"
+                              value={cardDetails.expiry}
+                              onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
+                              className="input-field w-full text-sm font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                              CVV
+                            </label>
+                            <input
+                              type="password"
+                              maxLength={4}
+                              required
+                              placeholder="•••"
+                              value={cardDetails.cvv}
+                              onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
+                              className="input-field w-full text-sm font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="flex justify-between items-baseline">
-                      <div>
-                        <span className="font-headline-sm text-headline-sm text-on-surface font-bold block">
-                          Grand Total
+                    {paymentMethod === 'cod' && (
+                      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+                        <span className="material-symbols-outlined text-amber-700 text-xl shrink-0 mt-0.5">
+                          info
                         </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">
-                          Total savings: ₹{(discount + 900).toLocaleString('en-IN')}
-                        </span>
+                        <div>
+                          <p className="font-bold">Auspicious Cash on Delivery Guarantee</p>
+                          <p className="mt-1">
+                            Pay via Cash or UPI at your doorstep upon receiving and inspecting your certified
+                            handloom silk saree box.
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="font-headline-lg text-headline-lg text-primary font-bold">
-                          ₹{grandTotal.toLocaleString('en-IN')}
-                        </span>
-                      </div>
+                    )}
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setStep(2)}
+                        disabled={isSubmitting}
+                        className="btn-outline px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="btn-gold flex-1 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-60"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-charcoal border-t-transparent rounded-full animate-spin"></span>
+                            Confirming Auspicious Order...
+                          </>
+                        ) : (
+                          <>
+                            Confirm &amp; Place Order — {formatPrice(total)}
+                            <span className="material-symbols-outlined text-sm">lock</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* STEP 4: CONFIRMATION */}
+              {step === 4 && (
+                <div className="bg-white rounded-2xl p-6 sm:p-10 border border-border shadow-sm text-center">
+                  <div className="w-20 h-20 rounded-full bg-emerald-rich/10 text-emerald-rich flex items-center justify-center mx-auto mb-6">
+                    <span className="material-symbols-outlined text-5xl">verified</span>
+                  </div>
+
+                  <p className="text-xs uppercase tracking-widest text-burgundy font-bold">
+                    శుభం భూయాత్ • Congratulations
+                  </p>
+                  <h2 className="font-heading text-2xl sm:text-3xl font-bold text-burgundy-900 mt-2 mb-3">
+                    Thank You! Your Sacred Order is Confirmed
+                  </h2>
+                  <p className="text-sm text-charcoal/70 max-w-lg mx-auto mb-6">
+                    Your bridal sarees are being ceremonially prepared with traditional neem leaves and pure
+                    cotton protective pouches at our flagship Gudur showroom.
+                  </p>
+
+                  <div className="max-w-md mx-auto p-5 rounded-2xl bg-cream-card border border-border text-left space-y-3 mb-8">
+                    <div className="flex justify-between items-center text-sm pb-2 border-b border-border">
+                      <span className="text-charcoal/60">Order Reference</span>
+                      <span className="font-mono font-bold text-burgundy-900">
+                        {placedOrder?.id || 'KLM-20261025-001'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pb-2 border-b border-border">
+                      <span className="text-charcoal/60">Amount Paid</span>
+                      <span className="font-bold text-charcoal">
+                        {formatPrice(placedOrder?.totalAmount || total)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pb-2 border-b border-border">
+                      <span className="text-charcoal/60">Payment Method</span>
+                      <span className="font-medium text-charcoal">
+                        {placedOrder?.paymentMethod || 'UPI Instant Transfer'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-charcoal/60">Estimated Delivery</span>
+                      <span className="font-bold text-emerald-rich">2 - 4 Business Days</span>
                     </div>
                   </div>
 
-                  {/* Primary Pay Button */}
-                  <button
-                    disabled={isProcessing}
-                    onClick={handlePlaceOrder}
-                    className="w-full bg-primary-container text-on-primary py-3.5 px-space-md rounded-lg font-label-lg text-label-lg font-bold tracking-wider uppercase hover:bg-primary transition-all duration-300 shadow-md flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">
-                      lock
-                    </span>
-                    <span>
-                      {isProcessing
-                        ? 'AUTHENTICATING SECURE PAYMENT...'
-                        : `PROCEED TO SECURE PAY ₹${grandTotal.toLocaleString('en-IN')}`}
-                    </span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link
+                      href="/"
+                      className="btn-gold px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">home</span>
+                      Return to Showroom Home
+                    </Link>
+                    <Link
+                      href="/admin"
+                      className="btn-outline px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+                      Track in Admin Portal
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                  <p className="font-body-sm text-body-sm text-on-surface-variant text-center flex items-center justify-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-secondary">
-                      sentiment_satisfied_alt
-                    </span>
-                    <span>100% Genuine Silk Certified or 10X Moneyback Guarantee</span>
-                  </p>
+            {/* Right Column: Order Summary Sidebar */}
+            <div className="lg:col-span-5">
+              <div className="bg-white rounded-2xl p-6 border border-border shadow-sm sticky top-[150px]">
+                <h3 className="font-heading text-lg font-bold text-burgundy-900 pb-4 border-b border-border flex items-center gap-2">
+                  <span className="material-symbols-outlined text-gold">receipt_long</span>
+                  Order Summary
+                </h3>
 
-                  <div className="bg-surface-container-high/60 p-space-sm rounded-lg flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-secondary text-[22px] shrink-0">
-                      support_agent
-                    </span>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant leading-tight">
-                      Need Telugu bridal assistance? Call{' '}
-                      <span className="font-bold text-on-surface">+91 98490 00000</span> or connect with our{' '}
-                      <span className="text-primary font-semibold underline cursor-pointer">
-                        Jubilee Hills Bridal Concierge
+                {/* Items preview */}
+                <div className="divide-y divide-border/60 max-h-64 overflow-y-auto my-4 pr-1">
+                  {(placedOrder ? placedOrder.items : cartItems).map((it, idx) => (
+                    <div key={idx} className="py-3 flex items-center justify-between gap-3 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-charcoal truncate">{it.title}</p>
+                        <p className="text-xs text-charcoal/60">
+                          Qty: {it.quantity} • {it.shade || 'Silk'}
+                        </p>
+                      </div>
+                      <span className="font-bold text-burgundy-900 shrink-0">
+                        {formatPrice(it.price * (it.quantity || 1))}
                       </span>
-                      .
-                    </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="border-t border-border pt-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-charcoal/70">
+                    <span>Insured Courier Delivery</span>
+                    <span>
+                      {deliveryFee === 0 ? (
+                        <span className="text-emerald-rich font-bold">FREE</span>
+                      ) : (
+                        formatPrice(deliveryFee)
+                      )}
+                    </span>
+                  </div>
+                  {couponApplied && (
+                    <div className="flex justify-between text-emerald-rich font-medium">
+                      <span>Wedding Coupon (15%)</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-3 flex justify-between items-baseline font-bold text-base text-charcoal">
+                    <span>Total Amount</span>
+                    <span className="text-xl font-heading text-burgundy-900">{formatPrice(total)}</span>
                   </div>
                 </div>
 
-                <div className="bg-surface-container-low p-space-md rounded-xl flex items-center gap-space-md border border-secondary-fixed/40">
-                  <div className="w-12 h-12 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[24px]">
-                      local_activity
-                    </span>
+                {/* Trust Badges */}
+                <div className="mt-6 pt-4 border-t border-border/80 space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs text-charcoal/70">
+                    <span className="material-symbols-outlined text-gold text-base">verified</span>
+                    <span>100% Certified Silk Mark Purity</span>
                   </div>
-                  <div>
-                    <h4 className="font-title-md text-title-md text-on-surface font-bold">
-                      Auspicious Wedding Muhurtham Delivery
-                    </h4>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-                      Need auspicious delivery timed for a specific Telugu muhurtham date? Our delivery specialists coordinate timed handovers with sacred prasad packs.
-                    </p>
+                  <div className="flex items-center gap-2 text-xs text-charcoal/70">
+                    <span className="material-symbols-outlined text-gold text-base">local_shipping</span>
+                    <span>Free Shipping Across Telangana on ₹5,000+</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-charcoal/70">
+                    <span className="material-symbols-outlined text-gold text-base">published_with_changes</span>
+                    <span>7-Day Hassle-Free Exchange Privilege</span>
                   </div>
                 </div>
               </div>
@@ -838,58 +779,7 @@ export default function CheckoutPage() {
         </div>
       </main>
 
-      {/* Celebratory Order Confirmation Modal */}
-      {orderConfirmed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
-          <div className="bg-surface-container-lowest text-on-surface rounded-2xl max-w-lg w-full p-8 shadow-2xl relative flex flex-col items-center text-center gap-4 border border-secondary-fixed/50 animate-in fade-in zoom-in duration-300">
-            <div className="w-16 h-16 rounded-full bg-secondary-container/40 flex items-center justify-center text-secondary">
-              <span className="material-symbols-outlined text-[36px]">auto_awesome</span>
-            </div>
-
-            <span className="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-bold">
-              శుభం • AUSPICIOUS WEDDING BLESSINGS
-            </span>
-
-            <h2 className="font-display-md text-headline-md font-bold text-primary">
-              Order Confirmed Successfully!
-            </h2>
-
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Your sacred order <strong className="text-on-surface">#{confirmedOrder?.id || 'KLM-ORD-2025-9821'}</strong> for{' '}
-              <strong className="text-primary">₹{grandTotal.toLocaleString('en-IN')}</strong> has been confirmed.
-            </p>
-
-            <div className="p-4 bg-surface-container-low rounded-xl text-left w-full text-body-sm flex flex-col gap-1.5 border border-surface-container">
-              <div>
-                <strong>Delivery Address:</strong> {selectedAddress === 'addr1' ? 'Banjara Hills, Hyderabad' : 'Himayatnagar, Hyderabad'}
-              </div>
-              <div>
-                <strong>Finishes Applied:</strong> Complimentary Fall, Pico &amp; Hand-twisted Silk Kuchu
-              </div>
-              <div>
-                <strong>Estimated Delivery:</strong> Within 48 hours with laboratory silk test report
-              </div>
-            </div>
-
-            <div className="flex gap-3 w-full pt-2">
-              <Link
-                href="/"
-                className="flex-1 py-3 rounded-lg bg-primary text-on-primary font-semibold text-center hover:bg-primary-container transition-colors"
-              >
-                Back to Shopping Mall
-              </Link>
-              <Link
-                href="/stores"
-                className="flex-1 py-3 rounded-lg bg-surface-container text-on-surface font-semibold text-center hover:bg-surface-container-high transition-colors"
-              >
-                Locate Stores
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Footer />
-    </>
+    </div>
   );
 }

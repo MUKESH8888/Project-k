@@ -29,7 +29,7 @@ module.exports = {
         "outline":                     "#d2d5d9",
         "outline-variant":             "#e8e8e8",
 
-        // Primary — near-black (RS Brothers accent)
+        // Primary & Luxury Heritage Palette
         "primary":                     "#1a1b18",
         "primary-container":           "#2d2e2b",
         "primary-fixed":               "#f3f3f3",
@@ -39,6 +39,25 @@ module.exports = {
         "on-primary-fixed":            "#1a1b18",
         "on-primary-fixed-variant":    "#444444",
         "inverse-primary":             "#aaaaaa",
+
+        // Regal Bridal Maroon & Burgundy
+        "burgundy":                    "#7A1426",
+        "burgundy-deep":               "#5E0D1B",
+        "burgundy-light":              "#9C2236",
+        "burgundy-rich":               "#8E1624",
+
+        // Temple & Zari Gold
+        "gold":                        "#C5A04B",
+        "gold-light":                  "#DFC587",
+        "gold-dark":                   "#9A7828",
+        "gold-bright":                 "#E5B842",
+
+        // Silk Cream & Ivory
+        "cream":                       "#FFFBF7",
+        "cream-warm":                  "#FAF3EA",
+        "cream-soft":                  "#FFF8F6",
+        "charcoal":                    "#181716",
+        "border":                      "#EAE5DC",
 
         // Inverse surface (dark headers / banners)
         "inverse-surface":             "#1a1b18",
@@ -64,7 +83,7 @@ module.exports = {
         "on-tertiary-fixed":           "#0a2016",
         "on-tertiary-fixed-variant":   "#1c4532",
 
-        // Error / Sale (RS Brothers uses #d72c0d)
+        // Error / Sale
         "error":                       "#d72c0d",
         "error-container":             "#fff0ed",
         "on-error":                    "#ffffff",
@@ -96,6 +115,10 @@ module.exports = {
 
       // ── Poppins across every token (RS Brothers primary font) ──────
       fontFamily: {
+        "heading":           ["'Playfair Display'", "Georgia", "serif"],
+        "serif":             ["'Playfair Display'", "Georgia", "serif"],
+        "display":           ["'Playfair Display'", "Georgia", "serif"],
+        "sans":              ["Poppins", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         "display-lg-mobile": ["Poppins", "sans-serif"],
         "display-md-mobile": ["Poppins", "sans-serif"],
         "display-lg":        ["Poppins", "sans-serif"],

@@ -109,6 +109,20 @@ export default function AdminLoginPage() {
             />
           </div>
 
+          <div className="flex items-center justify-between text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@kalyanammall.com');
+                setPassword('admin123');
+              }}
+              className="text-gold font-bold hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[15px]">key</span>
+              <span>Fill Admin Demo Credentials</span>
+            </button>
+          </div>
+
 
 
           <button
