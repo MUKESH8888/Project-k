@@ -1,1 +1,1 @@
-export { default } from '../checkout/page';
+export { Cart as default } from "../../components/Commerce";

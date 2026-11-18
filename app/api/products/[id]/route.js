@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
-import { Db } from '../../../../lib/db';
+import { guard, readJson } from "../../../../lib/request";
+import { requireAdmin } from "../../../../lib/session";
+import { NextResponse } from "next/server";
+import { Db } from "../../../../lib/db";
 
 export async function GET(request, { params }) {
   try {
@@ -7,7 +9,7 @@ export async function GET(request, { params }) {
     const product = await Db.getProductById(id);
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, product });
@@ -17,18 +19,23 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const rejected = guard(request);
+  if (rejected) return rejected;
+
+  const denied = requireAdmin(request);
+  if (denied) return denied;
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = await readJson(request);
 
     const updated = await Db.updateProduct(id, body);
     if (!updated) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Product updated successfully',
+      message: "Product updated successfully",
       product: updated,
     });
   } catch (error) {
@@ -37,17 +44,22 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const rejected = guard(request);
+  if (rejected) return rejected;
+
+  const denied = requireAdmin(request);
+  if (denied) return denied;
   try {
     const { id } = await params;
     const deleted = await Db.deleteProduct(id);
 
     if (!deleted) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Product removed from catalog',
+      message: "Product removed from catalog",
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

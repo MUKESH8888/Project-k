@@ -1,12 +1,15 @@
-import { NextResponse } from 'next/server';
-import { Db } from '../../../lib/db';
+import { guard, readJson } from "../../../lib/request";
+import { requireAdmin } from "../../../lib/session";
+import { NextResponse } from "next/server";
+import { Db } from "../../../lib/db";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const department = searchParams.get('department') || searchParams.get('dept');
-    const search = searchParams.get('search');
+    const category = searchParams.get("category");
+    const department =
+      searchParams.get("department") || searchParams.get("dept");
+    const search = searchParams.get("search");
 
     const products = await Db.getProducts({ category, department, search });
     return NextResponse.json({
@@ -16,19 +19,24 @@ export async function GET(request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch products' },
-      { status: 500 }
+      { error: error.message || "Failed to fetch products" },
+      { status: 500 },
     );
   }
 }
 
 export async function POST(request) {
+  const rejected = guard(request);
+  if (rejected) return rejected;
+
+  const denied = requireAdmin(request);
+  if (denied) return denied;
   try {
-    const body = await request.json();
+    const body = await readJson(request);
     if (!body.title || !body.price) {
       return NextResponse.json(
-        { error: 'Product title and price are required' },
-        { status: 400 }
+        { error: "Product title and price are required" },
+        { status: 400 },
       );
     }
 
@@ -36,15 +44,15 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Handloom product added to catalog successfully',
+        message: "Handloom product added to catalog successfully",
         product: newProduct,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to create product' },
-      { status: 500 }
+      { error: error.message || "Failed to create product" },
+      { status: 500 },
     );
   }
 }

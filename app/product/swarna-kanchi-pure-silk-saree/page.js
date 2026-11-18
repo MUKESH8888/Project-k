@@ -1,1 +1,4 @@
-export { default } from '../[id]/page';
+import { redirect } from "next/navigation";
+export default function Page() {
+  redirect("/product/prod_1");
+}

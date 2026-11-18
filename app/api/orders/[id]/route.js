@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server';
-import { Db } from '../../../../lib/db';
+import { guard, readJson } from "../../../../lib/request";
+import { requireAdmin } from "../../../../lib/session";
+import { NextResponse } from "next/server";
+import { Db } from "../../../../lib/db";
 
 export async function GET(request, { params }) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
   try {
     const { id } = await params;
     const order = await Db.getOrderById(id);
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, order });
@@ -17,18 +21,26 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const rejected = guard(request);
+  if (rejected) return rejected;
+
+  const denied = requireAdmin(request);
+  if (denied) return denied;
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = await readJson(request);
     const { status } = body;
 
     if (!status) {
-      return NextResponse.json({ error: 'Status is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Status is required" },
+        { status: 400 },
+      );
     }
 
     const updated = await Db.updateOrderStatus(id, status);
     if (!updated) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json({
