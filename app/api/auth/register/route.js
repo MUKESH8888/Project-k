@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { Db } from "../../../../lib/db";
 
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
 
   try {
@@ -31,7 +31,7 @@ export async function POST(request) {
       },
     });
 
-    response.cookies.set("kalyanam_session", createSession(user), {
+    response.cookies.set("kalyanam_session", await createSession(user), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

@@ -38,11 +38,15 @@ Storefront: http://localhost:3100 · Management: http://localhost:3100/admin
 
 ## Data and deployment
 
-The working backend uses SQLite in `.data/commerce.sqlite`; sessions and request limits use separate SQLite files in `.data/`. Catalog data is seeded once from the existing project's local assets. Orders, users and stock changes survive restarts. Never delete `.data/` to redeploy.
+Local development uses SQLite in `.data/commerce.sqlite`; sessions and request limits use separate SQLite files in `.data/`. Catalog data is seeded once from the existing project's local assets. Orders, users and stock changes survive restarts. Never delete `.data/` to redeploy.
 
 The prior PostgreSQL connection could not be reached. Its `.env.local` and `database/` schema/seed files were preserved; this implementation does not connect to or modify that remote database. The old source is also retained in Git history. Do not run the legacy SQL seed for this new backend.
 
-Deploy as a persistent Node server behind HTTPS. This storage model is intentionally single-host: do not deploy it to an ephemeral/serverless filesystem or horizontally scaled instances without migrating the storage layer. Keep the application disk, `.data/`, and `public/images/uploads/` durable and backed up. Stop the app for a simple consistent filesystem backup, or use SQLite's online backup facilities.
+For Vercel, set `COMMERCE_DATABASE_URL` to a pooled managed PostgreSQL connection string and `BLOB_READ_WRITE_TOKEN` to a Vercel Blob token in the project's Production, Preview and Development environments. `COMMERCE_DATABASE_URL` is intentionally separate from the unused legacy `DATABASE_URL`. The PostgreSQL schema is created automatically and the catalog is seeded on first startup; the existing local SQLite users, orders and stock are not migrated. Create the production administrator after configuring the database with `npm run admin:create`, using the same `COMMERCE_DATABASE_URL`.
+
+Vercel deployments require those managed services because function filesystems are ephemeral. Product uploads are stored in Vercel Blob; the database persists products, orders, users, sessions and rate limits. Local development without `COMMERCE_DATABASE_URL` continues using SQLite and local image files.
+
+Alternatively, run without `COMMERCE_DATABASE_URL` as a persistent Node server behind HTTPS. Keep the application disk, `.data/`, and `public/images/uploads/` durable and backed up. Stop the app for a simple consistent filesystem backup, or use SQLite's online backup facilities. The `db:backup` command covers only this local SQLite mode; use your managed PostgreSQL provider's backup tools for the Vercel database.
 
 Optional environment variables:
 

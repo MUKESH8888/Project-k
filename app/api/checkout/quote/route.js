@@ -1,7 +1,7 @@
 import { guard, readJson } from "../../../../lib/request";
 import { Db } from "../../../../lib/db";
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
   try {
     const body = await readJson(request);

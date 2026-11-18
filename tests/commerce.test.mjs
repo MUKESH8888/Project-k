@@ -63,7 +63,17 @@ test("registration hashes passwords and rejects duplicate emails and weak passwo
     null,
   );
 });
-test("opaque sessions reject forged roles and are revoked on logout", () => {
+test("a newly created account can be promoted for administrator setup", async () => {
+  const admin = await Db.registerUser({
+    name: "Test Admin",
+    email: "setup-admin@example.com",
+    password: "Test-admin-password-123",
+  });
+  assert.equal(await Db.promoteUserToAdmin(admin.id), true);
+  assert.equal((await Db.findUserById(admin.id)).role, "admin");
+  assert.equal(await Db.promoteUserToAdmin("missing-user"), false);
+});
+test("opaque sessions reject forged roles and are revoked on logout", async () => {
   const request = (token) => ({
     cookies: { get: () => ({ value: token }) },
     headers: new Headers(),
@@ -71,14 +81,14 @@ test("opaque sessions reject forged roles and are revoked on logout", () => {
     url: "http://localhost/api/admin/stats",
   });
   assert.equal(
-    sessionUser(request(JSON.stringify({ id: "admin_1", role: "admin" }))),
+    await sessionUser(request(JSON.stringify({ id: "admin_1", role: "admin" }))),
     null,
   );
-  const token = createSession(user);
-  assert.equal(sessionUser(request(token)).id, user.id);
-  assert.equal(requireAdmin(request(token)).status, 403);
-  deleteSession(request(token));
-  assert.equal(sessionUser(request(token)), null);
+  const token = await createSession(user);
+  assert.equal((await sessionUser(request(token))).id, user.id);
+  assert.equal((await requireAdmin(request(token))).status, 403);
+  await deleteSession(request(token));
+  assert.equal(await sessionUser(request(token)), null);
 });
 test("catalog filters and missing products behave correctly", async () => {
   const men = await Db.getProducts({ department: "men" });
@@ -266,20 +276,20 @@ test("customer cancellation enforces ownership, restocks once and blocks dispatc
   assert.equal(tracked.history.length, 3);
 });
 test("password change rejects wrong credentials and invalidates every existing session", async () => {
-  const first = createSession(user),
-    second = createSession(user);
+  const first = await createSession(user),
+    second = await createSession(user);
   const request = (token) => ({ cookies: { get: () => ({ value: token }) } });
   await assert.rejects(
     Db.changePassword(user.id, "wrong", "Replacement-password-123"),
   );
-  assert.ok(sessionUser(request(first)));
+  assert.ok(await sessionUser(request(first)));
   await Db.changePassword(
     user.id,
     "Test-password-123",
     "Replacement-password-123",
   );
-  assert.equal(sessionUser(request(first)), null);
-  assert.equal(sessionUser(request(second)), null);
+  assert.equal(await sessionUser(request(first)), null);
+  assert.equal(await sessionUser(request(second)), null);
   assert.equal(await Db.authenticate(user.email, "Test-password-123"), null);
   assert.ok(await Db.authenticate(user.email, "Replacement-password-123"));
 });

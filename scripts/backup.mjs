@@ -1,6 +1,10 @@
 import { DatabaseSync, backup } from "node:sqlite";
 import { mkdir, cp, access, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+if (process.env.COMMERCE_DATABASE_URL)
+  throw new Error(
+    "This backup command covers local SQLite data only. Use your managed PostgreSQL provider's backup tools for the production database.",
+  );
 const commerce = resolve(process.env.COMMERCE_DATA_DIR || ".data");
 const sessions = resolve(process.env.SESSION_DATA_DIR || ".data");
 const destination = join(

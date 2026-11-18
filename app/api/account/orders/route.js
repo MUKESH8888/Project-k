@@ -1,7 +1,7 @@
 import { sessionUser } from "../../../../lib/session";
 import { Db } from "../../../../lib/db";
 export async function GET(request) {
-  const user = sessionUser(request);
+  const user = await sessionUser(request);
   if (!user)
     return Response.json({ error: "Please sign in." }, { status: 401 });
   return Response.json(

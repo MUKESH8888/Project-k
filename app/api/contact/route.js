@@ -2,7 +2,7 @@ import { guard, readJson } from "../../../lib/request";
 import { Db } from "../../../lib/db";
 import { requireAdmin } from "../../../lib/session";
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
   try {
     await Db.createMessage(await readJson(request));
@@ -12,7 +12,7 @@ export async function POST(request) {
   }
 }
 export async function GET(request) {
-  const denied = requireAdmin(request);
+  const denied = await requireAdmin(request);
   if (denied) return denied;
   return Response.json({ messages: await Db.getMessages() });
 }

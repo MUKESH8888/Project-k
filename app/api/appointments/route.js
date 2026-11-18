@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { Db } from "../../../lib/db";
 
 export async function GET(request) {
-  const denied = requireAdmin(request);
+  const denied = await requireAdmin(request);
   if (denied) return denied;
   try {
     const appointments = await Db.getAppointments();
@@ -22,7 +22,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
 
   try {

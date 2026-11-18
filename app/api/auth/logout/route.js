@@ -3,10 +3,10 @@ import { deleteSession } from "../../../../lib/session";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
 
-  deleteSession(request);
+  await deleteSession(request);
   const response = NextResponse.json({
     success: true,
     message: "Logged out successfully from Kalyanam Shopping Mall.",

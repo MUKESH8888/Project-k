@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 import { Db } from "../../../../lib/db";
 
 export async function PUT(request, { params }) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
 
-  const denied = requireAdmin(request);
+  const denied = await requireAdmin(request);
   if (denied) return denied;
   try {
     const { id } = await params;

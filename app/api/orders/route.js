@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { Db } from "../../../lib/db";
 
 export async function GET(request) {
-  const denied = requireAdmin(request);
+  const denied = await requireAdmin(request);
   if (denied) return denied;
   try {
     const orders = await Db.getOrders();
@@ -23,7 +23,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const rejected = guard(request);
+  const rejected = await guard(request);
   if (rejected) return rejected;
 
   try {
@@ -38,7 +38,7 @@ export async function POST(request) {
 
     const newOrder = await Db.createOrder({
       ...body,
-      userId: sessionUser(request)?.id || null,
+      userId: (await sessionUser(request))?.id || null,
     });
 
     return NextResponse.json(

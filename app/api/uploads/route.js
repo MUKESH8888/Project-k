@@ -1,15 +1,21 @@
 import { requireAdmin } from "../../../lib/session";
 import { guard } from "../../../lib/request";
+import { put } from "@vercel/blob";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
 export const runtime = "nodejs";
 export async function POST(request) {
-  const denied = requireAdmin(request);
+  const denied = await requireAdmin(request);
   if (denied) return denied;
-  const rejected = guard(request, 6 * 1024 * 1024);
+  const rejected = await guard(request, 6 * 1024 * 1024);
   if (rejected) return rejected;
+  if (process.env.VERCEL && !process.env.BLOB_READ_WRITE_TOKEN)
+    return Response.json(
+      { error: "Product image storage is not configured." },
+      { status: 503 },
+    );
   try {
     const reader = request.body.getReader();
     let bytes = 0;
@@ -51,18 +57,28 @@ export async function POST(request) {
       .resize(1600, 2000, { fit: "inside", withoutEnlargement: true })
       .webp({ quality: 85 })
       .toBuffer();
+    const filename = randomUUID() + ".webp";
+    if (process.env.VERCEL) {
+      const blob = await put(filename, output, {
+        access: "public",
+        contentType: "image/webp",
+        addRandomSuffix: false,
+      });
+      return Response.json({ image: blob.url }, { status: 201 });
+    }
     const directory = join(process.cwd(), "public", "images", "uploads");
     await mkdir(directory, { recursive: true });
-    const filename = randomUUID() + ".webp";
     await writeFile(join(directory, filename), output, { flag: "wx" });
     return Response.json({ image: "/media/" + filename }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Product image processing or storage failed:", error);
     return Response.json(
       {
-        error:
-          "Unable to read this image. Please choose another JPEG, PNG or WebP file.",
+        error: process.env.VERCEL
+          ? "Unable to store this image. Please try again later."
+          : "Unable to read this image. Please choose another JPEG, PNG or WebP file.",
       },
-      { status: 400 },
+      { status: process.env.VERCEL ? 503 : 400 },
     );
   }
 }
